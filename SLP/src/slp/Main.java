@@ -5,6 +5,8 @@ import java.io.*;
 import symbolTable.SemanticChecker;
 import java_cup.runtime.*;
 
+// just checking how commit works
+
 public class Main {
 	/** Reads an IC and pretty-prints it.
 	 * 
