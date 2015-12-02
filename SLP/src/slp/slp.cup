@@ -1,0 +1,353 @@
+package slp;
+
+import java.util.List;
+import java.util.ArrayList;
+import java_cup.runtime.*;
+
+parser code  {:
+	private Lexer lexer;
+
+	public Parser(Lexer lexer) {
+		super(lexer);
+		this.lexer = lexer;
+	}	
+	
+    public void report_error(String message, Object info) {
+        StringBuilder m = new StringBuilder("Error");
+   
+        if (info instanceof java_cup.runtime.Symbol) {
+            Symbol s = ((java_cup.runtime.Symbol) info);
+   
+            if (s.left >= 0) {              // s.left is the line number 
+                m.append(" in line "+(s.left+1));   
+                if (s.right >= 0)                  // s.right is the column number 
+                    m.append(", column "+(s.right+1));
+            }
+        }
+        m.append(" : "+message);
+        System.err.println(m);
+    }
+   
+    public void report_fatal_error(String message, Object info) {
+        report_error(message, info);
+        System.exit(1);
+    }
+:}
+
+
+
+terminal BOOLEAN, VOID, INT, STR; 
+terminal TRUE, FALSE, NULL;
+terminal ASSIGN, SEMI, COMMA, DOT, LCBR, RCBR, LP, RP, LB, RB; // = ; , . { } ( ) [ ]
+terminal BREAK, CONTINUE, RETURN, NEW, WHILE, IF, ELSE, LENGTH, STATIC, THIS, EXTENDS, CLASS; 
+terminal PLUS, MINUS, MULTIPLY, DIVIDE, MOD;
+terminal LT, GT, LTE, GTE, EQUAL, NEQUAL;	// < > <= >= == !=
+terminal LNEG, LAND, LOR;	// ! && ||
+terminal UMINUS;
+
+terminal Integer	INTEGER;
+terminal String		ID, CLASS_ID, QUOTE;
+
+
+
+non terminal Program program;
+non terminal Class classDecl;
+non terminal Members members;
+non terminal FieldList field;
+non terminal IDList idList;
+non terminal Method method; 
+non terminal StmtList stmtList;
+non terminal FormalList formalList;
+non terminal Formal formal;
+non terminal Type type;
+non terminal Stmt stmt;
+non terminal Expr expr;
+non terminal CallExpr call;
+non terminal StaticCall staticCall;
+non terminal VirtCall virtualCall;
+non terminal ExprList exprList;
+non terminal Location location;
+non terminal BinaryOpExpr binop;
+non terminal UnaryOpExpr unop;
+non terminal LiteralExpr literal;
+
+
+
+precedence right ASSIGN;
+precedence left LOR;
+precedence left LAND;
+precedence left EQUAL, NEQUAL;
+precedence left LT, LTE, GT, GTE;
+precedence left PLUS, MINUS; 
+precedence left MULTIPLY, DIVIDE, MOD;
+precedence right UMINUS, LNEG;
+precedence left LB, RB, LP, RP, DOT;
+precedence left ELSE;
+
+
+
+/************************  DERIVATIONS  *********************************
+program       ::= classDecl*
+classDecl     ::= class CLASS_ID [extends CLASS_ID] '{' (field|method)* '}'
+field         ::= type ID (',' ID)* ';'
+method        ::= [static] ( type | void ) ID '(' [ formals ] ')' '{' stmt* '}'
+formals       ::= type ID (',' type ID)*
+type          ::= INT | BOOLEAN | STRING | CLASS | type '[' ']'
+stmt          ::= location '=' expr ';'
+              |   call ';'
+              |   return [ expr ] ';'
+              |   if '(' expr ')' stmt [ else stmt ]
+              |   while '(' expr ')' stmt
+              |   break ';'
+              |   continue ';'
+              |   '{' stmt* '}'   
+              |   type ID [ '=' expr ] ';'
+
+expr          ::= location
+              |   call
+              |   this
+		      |   new CLASS_ID '(' ')'
+		      |   new type '[' expr ']'
+		      |   expr '.' length
+		      |   expr binop expr
+	   	      |   unop expr
+		      |   literal
+		      |   '(' expr ')'
+		      
+call        ::= staticCall | virtualCall
+staticCall  ::= CLASS_ID '.' ID '(' [ expr (',' expr)* ] ')'
+virtualCall ::= [ expr '.' ] ID '(' [ expr (',' expr)* ] ')'
+location    ::= ID | expr '.' ID | expr '[' expr ']'
+
+binop   ::= '+' | '-' | '*' | '/' | '%' | '&&' | '||'
+            '<' | '<='| '>' | '>='| '=='| '!=' 
+unop    ::= '-' | '!'
+literal ::= INTEGER | QUOTE | true | false | null
+*************************************************************************/
+
+
+program ::= 
+	program:p classDecl:cl
+		{: 	p.add(cl); RESULT = p; :}
+	| // epsilon
+		{: 	RESULT = new Program(((Symbol)CUP$Parser$stack.peek()).left, new ArrayList<Class>()); :}
+;
+
+classDecl ::= 
+	CLASS CLASS_ID:cid LCBR members:mem RCBR
+		{: 	RESULT = new Class(cidleft, cid, mem.fieldList, mem.methodList);  :} 
+	| CLASS CLASS_ID:cid EXTENDS CLASS_ID:sup LCBR members:mem RCBR
+		{:	 RESULT = new Class(cidleft, cid, sup, mem.fieldList, mem.methodList); :}
+;
+
+members ::= 
+	members:mem field:f
+		{: 	mem.add(f); RESULT = mem; :}
+	| members:mem method:m
+		{: 	mem.add(m); RESULT = mem; :}
+	| // epsilon
+		{: 	RESULT = new Members(new ArrayList<Field>(), new ArrayList<Method>()); :}
+;
+
+field ::= 
+	type:t idList:idl SEMI
+		{: 	RESULT = new FieldList(tleft, t, idl);  :}
+;
+
+idList ::= 
+	idList:idl COMMA ID:id
+		{: 	idl.add(id); RESULT = idl; :}
+	| ID:id
+		{: 	RESULT = new IDList(id); :}
+;
+
+type ::= 
+	INT:i 			
+		{: 	RESULT = new PrimitiveType(ileft, PrimitiveTypesEnum.INT); :}
+	| BOOLEAN:b 		
+		{: 	RESULT = new PrimitiveType(bleft, PrimitiveTypesEnum.BOOLEAN); :}
+	| STR:s		
+		{: 	RESULT = new PrimitiveType(sleft, PrimitiveTypesEnum.STRING); :}
+	| CLASS_ID:cid 	
+		{: 	RESULT = new ClassType(cidleft, cid); :}
+	| type:t LB RB 	
+		{: 	++t.arrayLvl; RESULT = t; :}
+;
+
+method ::= 
+	STATIC type:t ID:id LP formalList:f RP LCBR stmtList:sl RCBR
+		{:  RESULT = new Method(idleft, true, t, id, f.formals, sl.statements);  :}
+	| STATIC type:t ID:id LP RP LCBR stmtList:sl RCBR
+		{:  RESULT = new Method(idleft, true, t, id, new ArrayList<Formal>(), sl.statements);  :}
+	| STATIC VOID:v ID:id LP formalList:f RP LCBR stmtList:sl RCBR
+		{:  RESULT = new Method(idleft, true, new PrimitiveType(vleft, PrimitiveTypesEnum.VOID), id, f.formals, sl.statements); :}
+	| STATIC VOID:v ID:id LP RP LCBR stmtList:sl RCBR 
+		{:  RESULT = new Method(idleft, true, new PrimitiveType(vleft, PrimitiveTypesEnum.VOID), id, new ArrayList<Formal>(), sl.statements); :}
+	| type:t ID:id LP formalList:f RP LCBR stmtList:sl RCBR
+		{:  RESULT = new Method(idleft, false, t, id, f.formals, sl.statements);  :}
+	| type:t ID:id LP RP LCBR stmtList:sl RCBR
+		{:  RESULT = new Method(idleft, false, t, id, new ArrayList<Formal>(), sl.statements); :}
+	| VOID:v ID:id LP formalList:f RP LCBR stmtList:sl RCBR
+		{:  RESULT = new Method(idleft, false, new PrimitiveType(vleft, PrimitiveTypesEnum.VOID), id, f.formals, sl.statements); :}
+	| VOID:v ID:id LP RP LCBR stmtList:sl RCBR 
+		{:  RESULT = new Method(idleft, false, new PrimitiveType(vleft, PrimitiveTypesEnum.VOID), id, new ArrayList<Formal>(), sl.statements); :}
+;
+
+formalList ::= 
+	formalList:fl COMMA formal:f
+		{:  fl.add(f); RESULT = fl; :}
+	| formal:f
+		{:  RESULT = new FormalList(f); :}
+;
+
+formal ::= 
+	type:t ID:id
+		{: RESULT = new Formal(tleft, t, id);  :}
+;
+
+stmtList ::= 
+	stmtList:sl stmt:s
+		{:	sl.add(s); RESULT = sl; :}
+	| // epsilon
+		{:  RESULT = new StmtList(((Symbol)CUP$Parser$stack.peek()).left, new ArrayList<Stmt>()); :}
+;
+
+stmt ::=  
+	location:l ASSIGN expr:e SEMI
+		{:	RESULT = new AssignStmt(lleft, l, e); :}
+	| call:c SEMI
+		{:	RESULT = new CallStmt(cleft, c); :}
+	| RETURN expr:e SEMI
+		{:	RESULT = new ReturnStmt(eleft, e); :}
+	| RETURN:r SEMI
+		{:	RESULT = new ReturnStmt(rleft, null); :}
+	| IF LP expr:e RP stmt:s1 ELSE stmt:s2
+		{:	RESULT = new IfStmt(eleft, e, s1, s2); :}
+	| IF LP expr:e RP stmt:s
+		{:	RESULT = new IfStmt(eleft, e, s); :}
+	| WHILE LP expr:e RP stmt:s
+		{:	RESULT = new WhileStmt(eleft, e, s); :}
+	| BREAK:b SEMI
+		{:	RESULT = new BreakStmt(bleft); :}
+	| CONTINUE:c SEMI
+		{:	RESULT = new ContinueStmt(cleft); :}
+	| LCBR stmtList:sl RCBR
+		{:	RESULT = sl; :}
+	| type:t ID:id ASSIGN expr:e SEMI
+		{:	RESULT = new LocalVarStmt(idleft, t, id, e); :}
+	| type:t ID:id SEMI
+		{:	RESULT = new LocalVarStmt(idleft, t, id); :}
+;
+
+expr ::= 
+	location:l
+		{:	RESULT = l; :}
+	| call:c
+		{:	RESULT = c; :}
+	| THIS:t
+		{:	RESULT = new ThisExpr(tleft); :}
+	| NEW CLASS_ID:cid LP RP
+		{:	RESULT = new NewClassExpr(cidleft, cid); :}
+	| NEW type:t LB expr:e RB
+		{:	RESULT = new NewArrayExpr(tleft, t, e); :}
+	| expr:e DOT LENGTH
+		{:	RESULT = new LengthExpr(eleft, e); :}
+	| binop:b
+		{:	RESULT = b; :}
+	| unop:u
+		{:	RESULT = u; :}
+	| literal:l
+		{:	RESULT = l; :}
+	| LP expr:e RP
+		{:	RESULT = e; :}
+;
+
+call ::= 
+	staticCall:sc
+		{:	RESULT = sc; :}
+	| virtualCall:vc
+		{:	RESULT = vc; :}
+;
+
+staticCall ::= 
+	CLASS_ID:cid DOT ID:id LP exprList:el RP
+		{:	RESULT = new StaticCall(cidleft, cid, id, el.exprs); :}
+	| CLASS_ID:cid DOT ID:id LP RP
+		{:	RESULT = new StaticCall(cidleft, cid, id, new ArrayList<Expr>()); :}
+;
+
+virtualCall ::= 
+	expr:e DOT ID:id LP exprList:el RP
+		{:	RESULT = new VirtCall(idleft, e, id, el.exprs); :}
+	| expr:e DOT ID:id LP RP
+		{:	RESULT = new VirtCall(idleft, e, id, new ArrayList<Expr>()); :}
+	| ID:id LP exprList:el RP
+		{:	RESULT = new VirtCall(idleft, id, el.exprs); :}
+	| ID:id LP RP
+		{:	RESULT = new VirtCall(idleft, id, new ArrayList<Expr>()); :}
+;
+
+exprList ::= 
+	exprList:el COMMA expr:e
+		{:	el.add(e); RESULT = el; :}
+	| expr:e 
+		{:  RESULT = new ExprList(e); :}
+;
+
+location ::=  
+	expr:e1 LB expr:e2 RB
+		{:	RESULT = new ArrayLocation(e1left, e1, e2); :}
+	| expr:e DOT ID:id
+		{:	RESULT = new VarLocation(eleft, e, id); :}
+	| ID:id
+		{:	RESULT = new VarLocation(idleft, id); :}	
+;
+	
+binop ::= 
+	expr:e1 PLUS expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.PLUS, e2); :}
+	| expr:e1 MINUS expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.MINUS, e2); :}
+	| expr:e1 MULTIPLY expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.MULTIPLY, e2); :}
+	| expr:e1 DIVIDE expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.DIVIDE, e2); :}
+	| expr:e1 MOD expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.MOD, e2); :}
+	| expr:e1 LAND expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.LAND, e2); :}
+	| expr:e1 LOR expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.LOR, e2); :}
+	| expr:e1 LT expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.LT, e2); :}
+	| expr:e1 LTE expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.LTE, e2); :}
+	| expr:e1 GT expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.GT, e2); :}
+	| expr:e1 GTE expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.GTE, e2); :}
+	| expr:e1 EQUAL expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.EQUAL, e2); :}
+	| expr:e1 NEQUAL expr:e2
+		{:	RESULT = new BinaryOpExpr(e1left, e1, BinaryOpsEnum.NEQUAL, e2); :}
+;
+
+unop ::= 
+	MINUS expr:e
+		{:	RESULT = new UnaryOpExpr(eleft, UnaryOpsEnum.UMINUS, e); :}	%prec UMINUS
+	| LNEG expr:e
+		{:	RESULT = new UnaryOpExpr(eleft, UnaryOpsEnum.LNEG, e); :}
+;  
+
+literal ::= 
+	INTEGER:i
+		{:	RESULT = new LiteralExpr(ileft, LiteralsEnum.INTEGER, i); :}
+	| QUOTE:q
+		{:	RESULT = new LiteralExpr(qleft, LiteralsEnum.QUOTE, q); :}
+	| TRUE:t
+		{:	RESULT = new LiteralExpr(tleft, LiteralsEnum.TRUE, "true"); :}
+	| FALSE:f
+		{:	RESULT = new LiteralExpr(fleft, LiteralsEnum.FALSE, "false"); :}
+	| NULL:n
+		{:	RESULT = new LiteralExpr(nleft, LiteralsEnum.NULL, "null"); :}
+;

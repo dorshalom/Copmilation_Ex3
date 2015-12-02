@@ -1,0 +1,29 @@
+class Empty{}
+
+class Base{
+	Derived derived;
+	int foo(Base b){}
+}
+class Derived extends Base{
+	Base base;
+	int foo(Derived d){}
+}
+
+class Test extends Base{
+	boolean i;
+
+	void testShadowing(int j){
+		string i;
+		while(true){
+			int[] i;
+			continue;
+			while(true){
+				Base[][] i;
+				break;
+			}
+		}
+	}
+
+	static void main(string[] args){
+	}
+}
