@@ -61,8 +61,8 @@ import semanticTypes.*;
 			} catch (SemanticError e2){
 				try{
 					MethodSymbol superMS = getMethodSymbolRec(name);
-					// method defined in super -> check that method signatures are the same
-					if (type.isLike(superMS.type) && (superMS.isStatic == isStatic) && (superMS.checkParamTypes(params))){
+					// method defined in super -> check that both methods are virtual
+					if ((isStatic == false) && (superMS.isStatic == isStatic)){
 						methods.put(name, new MethodSymbol(name, type, params, isStatic)); 		
 						return;
 					}
