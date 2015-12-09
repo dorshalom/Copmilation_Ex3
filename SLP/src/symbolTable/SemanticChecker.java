@@ -111,7 +111,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
         if (leftOpType == null) return null;
         // check right op
         SemanticType rightOpType = (SemanticType) binary.rightOp.accept(this, null);
-        if (leftOpType == null) return null;
+        if (rightOpType == null) return null;
         
 		switch(binary.operator.name){
 		case "&&": case "||":
@@ -127,7 +127,12 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	        }
 	        return typTab.booleanType;
 	      
-		case "+":case "-": case "*": case "/": case "%":
+		case "+":
+			if(leftOpType == typTab.stringType && rightOpType == typTab.stringType){
+				return typTab.stringType;
+		    }
+		    // else, fall through to check if they are both ints
+		case "-": case "*": case "/": case "%":
 	        if(!(leftOpType == typTab.intType &&  rightOpType == typTab.intType)){
 	        	System.out.println(binary.line+": Semantic error: Operands must be of type int");
 	        	System.exit(1);
