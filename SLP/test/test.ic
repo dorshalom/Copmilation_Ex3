@@ -1,4 +1,7 @@
-class Empty{}
+class Empty{
+	string moshe;
+	
+}
 
 class Base{
 	Derived derived;
@@ -9,11 +12,24 @@ class Derived extends Base{
 	int foo(Derived d){}
 }
 
+class Person{}
+
+class Student extends Person{
+	
+}
+
+
+
 class Test extends Base{
 	boolean i;
 
 	void testShadowing(int j){
-		string i;
+		Empty i;
+		Person p;
+		Student s;
+		
+		p = s;
+		
 		while(true){
 			int[] i;
 			continue;

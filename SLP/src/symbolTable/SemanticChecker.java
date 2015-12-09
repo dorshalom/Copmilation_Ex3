@@ -7,6 +7,8 @@ import semanticTypes.*;
 import slp.*;
 import slp.Class;
 
+
+
 /**
  * Implemented checks:
  * - in-class symbol redefinitions and overloading
@@ -248,6 +250,31 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(AssignStmt assignStmt, Object d) {
+		
+        // check location recursively
+        SemanticType locationType = (SemanticType) assignStmt.lhs.accept(this, null);
+        if (locationType == null) return null;
+        // check assignment recursively
+        SemanticType assignmentType = (SemanticType) assignStmt.rhs.accept(this, null);
+        if (assignmentType == null) return null;
+        
+        if(!assignmentType.isLike(locationType)){
+        	System.err.println(assignStmt.line+": Semantic error: type mismatch, not of type "+locationType.name);
+        	System.exit(1);
+        }
+        
+        // type check
+        // check that the assignment is of the same type / subtype of the location type
+       /* if (!assignmentType.subtypeOf(locationType)){
+                System.err.println(new SemanticError("type mismatch, not of type "+locationType.getName(),
+                                assignment.getLine(),
+                                assignmentType.getName()));
+                return null;
+        }
+        
+        return true;
+		*/
+		
 		assignStmt.lhs.accept(this, null);
 		assignStmt.rhs.accept(this, null);
 		return null;
@@ -280,12 +307,41 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(VarLocation varLoc, Object d) {
-		if (varLoc.location != null){
-			varLoc.location.accept(this, null);
-		}else if(symTab.findEntryGlobal(varLoc.name) == null){
-			System.out.println(""+varLoc.line + ": Semantic error: undefined variable: " + varLoc.name);
-			System.exit(1);
-		}
+		if (varLoc.location != null){ //external
+			SemanticType locationType = (SemanticType) varLoc.location.accept(this, null);
+			if (locationType == null) return null;
+			try{
+				typTab.resolveClassType(locationType.name);
+				ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(locationType.name);
+				
+				try{
+					FieldSymbol fs = cs.getFieldSymbolRec(varLoc.name);
+					return fs.type;
+				}
+				catch (SemanticError se){
+					// there is no such field in that class
+					System.out.println(varLoc.line +": Semantic error: there is no field "+ varLoc.name +" in class "+cs.name);
+					System.exit(1);
+				}
+				
+			}
+			catch (SemanticError se){
+				//there is no class like this
+				System.out.println(varLoc.line +": Semantic error: "+locationType+" does not exist");
+				System.exit(1);
+			}
+		
+		
+		}else {
+			VarSymbol res = (VarSymbol) symTab.findEntryGlobal(varLoc.name);
+			if(res == null){
+				System.out.println(""+varLoc.line + ": Semantic error: undefined variable: " + varLoc.name);
+				System.exit(1);
+			}
+			return res.type;
+			
+		}		
+		
 		return null;
 	}
 
@@ -367,17 +423,35 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 			System.out.println(""+localVar.line + ": Semantic error: variable redefinition: "+localVar.name);
 			System.exit(1);
 		}
+		
+		if(localVar.init != null) {
+			localVar.init.accept(this, null);
+			try{
+				symTab.addEntry(new VarSymbol(localVar.name, typTab.resolveType(localVar.type.getName()),true));
+				if (!(typTab.resolveType(localVar.type.getName()).isLike(typTab.resolveType((String) localVar.init.accept(this, null))))){
+					
+				}
+			} catch (SemanticError se){
+				System.out.println(""+localVar.type.line + ": "+se);
+				System.exit(1);
+			}
+			
 
-		try{
-			symTab.addEntry(new VarSymbol(localVar.name, typTab.resolveType(localVar.type.getName())));
-		} catch (SemanticError se){
-			System.out.println(""+localVar.type.line + ": "+se);
-			System.exit(1);
+			
+		}
+		else {
+			try{
+				symTab.addEntry(new VarSymbol(localVar.name, typTab.resolveType(localVar.type.getName())));
+			} catch (SemanticError se){
+				System.out.println(""+localVar.type.line + ": "+se);
+				System.exit(1);
+			}
 		}
 		
-		// has initializer
-		if (localVar.init != null)
-			localVar.init.accept(this, null);
+		
+
+		
+
 		
 		return null;
 	}
@@ -407,6 +481,18 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(LiteralExpr literal, Object d) {
+		switch(literal.type){
+		case INTEGER:
+			return typTab.intType;
+		case FALSE:
+			return typTab.booleanType;
+		case TRUE:
+			return typTab.booleanType;
+		case QUOTE:
+			return typTab.stringType;
+		case NULL:
+			return typTab.nullType;
+		}
 		return null;
 	}
 
