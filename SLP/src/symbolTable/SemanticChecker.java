@@ -106,8 +106,25 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(BinaryOpExpr binary, Object d) {
-		binary.leftOp.accept(this, null);
-		binary.rightOp.accept(this, null);
+		// check left op
+		SemanticType leftOpType = (SemanticType) binary.leftOp.accept(this, null);
+        if (leftOpType == null) return null;
+        // check right op
+        SemanticType rightOpType = (SemanticType) binary.rightOp.accept(this, null);
+        if (leftOpType == null) return null;
+        
+		switch(binary.operator.name){
+		case "&&": 
+		case "||":
+	        if(!(leftOpType == typTab.booleanType &&  rightOpType == typTab.booleanType)){
+	        	System.out.println(binary.line+": Semantic error: Operands must be of type boolean");
+	        	System.exit(1);
+	        }
+	        return typTab.booleanType;
+			
+				
+		}
+
 		return null;
 	}
 

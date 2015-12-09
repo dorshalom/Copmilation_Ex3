@@ -27,8 +27,13 @@ class Test extends Base{
 		Empty i;
 		Person p;
 		Student s;
+		boolean b1;
+		b1 = false;
+		
 		
 		p = s;
+		
+		if((b1 && true) || b1){}
 		
 		while(true){
 			int[] i;
