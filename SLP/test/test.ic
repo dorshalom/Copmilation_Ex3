@@ -35,6 +35,13 @@ class Test extends Base{
 		
 		if((b1 && true) || b1){}
 		
+		int bla;
+		
+		string str;
+		str = "hello world";
+		
+		if (str == str)
+		
 		while(true){
 			int[] i;
 			continue;

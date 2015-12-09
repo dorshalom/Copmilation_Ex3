@@ -114,14 +114,32 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
         if (leftOpType == null) return null;
         
 		switch(binary.operator.name){
-		case "&&": 
-		case "||":
+		case "&&": case "||":
 	        if(!(leftOpType == typTab.booleanType &&  rightOpType == typTab.booleanType)){
 	        	System.out.println(binary.line+": Semantic error: Operands must be of type boolean");
 	        	System.exit(1);
 	        }
 	        return typTab.booleanType;
-			
+		case ">":case ">=" : case "<": case "<=":
+	        if(!(leftOpType == typTab.intType &&  rightOpType == typTab.intType)){
+	        	System.out.println(binary.line+": Semantic error: Operands must be of type int");
+	        	System.exit(1);
+	        }
+	        return typTab.booleanType;
+	      
+		case "+":case "-": case "*": case "/": case "%":
+	        if(!(leftOpType == typTab.intType &&  rightOpType == typTab.intType)){
+	        	System.out.println(binary.line+": Semantic error: Operands must be of type int");
+	        	System.exit(1);
+	        }
+	        return typTab.intType;
+	    
+		case "==": case "!=":
+	        if(!leftOpType.name.equals(rightOpType.name)){
+	        	System.out.println(binary.line+": Semantic error: Operands must be of the same type");
+	        	System.exit(1);
+	        }
+	        return typTab.booleanType;
 				
 		}
 
