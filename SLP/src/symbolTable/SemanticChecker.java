@@ -465,13 +465,25 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(ArrayLocation arrayLoc, Object d) {
-		arrayLoc.array.accept(this, null);
+		SemanticType arrayElement = null;
+		SemanticType arrayType = (SemanticType) arrayLoc.array.accept(this, null);
+		if (!typTab.isArrayType(arrayType)){
+			System.out.println(""+arrayLoc.line + ": Semantic error: array access to non-array type" );
+			System.exit(1);
+		}
+
 		SemanticType indexType = (SemanticType) arrayLoc.index.accept(this, null);
 		if (indexType != typTab.intType) {
 			System.out.println(""+arrayLoc.line + ": Semantic error: array index is not of type int" );
 			System.exit(1);
 		}
-		return null;
+		try{
+			arrayElement = typTab.resolveType(arrayType.name.substring(0, arrayType.name.length()-2));
+		}catch(SemanticError se){
+			System.out.println(""+arrayLoc.line + ": " + se);
+			System.exit(1);
+		}
+		return arrayElement;
 	}
 
 	@Override
@@ -583,25 +595,41 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(NewClassExpr newClass, Object d) {
-		return null;
+		SemanticType classType = null;
+		try{
+			classType = typTab.resolveClassType(newClass.name);
+		}catch(SemanticError se){
+			System.out.println(""+newClass.line + ": " + se);
+			System.exit(1);
+		}
+		return classType;
 	}
 
 	@Override
 	public Object visit(NewArrayExpr newArray, Object d) {
-		newArray.type.accept(this, null);
+		SemanticType arrayType = null;
+		try{
+			arrayType = typTab.resolveArrayType(newArray.type.getName());
+		}catch(SemanticError se){
+			System.out.println(""+newArray.line + ": " + se);
+			System.exit(1);
+		}
 		SemanticType indexType = (SemanticType) newArray.index.accept(this, null);
 		if (indexType != typTab.intType) {
 			System.out.println(""+newArray.line + ": Semantic error: array size is not of type int" );
 			System.exit(1);
 		}
-		newArray.index.accept(this, null);
-		return null;
+		return arrayType;
 	}
 
 	@Override
 	public Object visit(LengthExpr len, Object d) {
-		len.context.accept(this, null);
-		return null;
+		SemanticType contextType = (SemanticType) len.context.accept(this, null);
+		if (!typTab.isArrayType(contextType)){
+			System.out.println(""+len.line + ": Semantic error: cannot apply operator 'length' to non-array type" );
+			System.exit(1);
+		}
+		return typTab.intType;
 	}
 
 	@Override

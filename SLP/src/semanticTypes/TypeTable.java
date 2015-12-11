@@ -33,10 +33,14 @@ public class TypeTable {
     }
 	  
 	// returns a unique semantic type object, representing the array type defined in the parameter
-    public SArrayType resolveArrayType(String name) {
+    public SArrayType resolveArrayType(String name) throws SemanticError{
     	// array hashmap is populated on-the-go. When we see a new array type, its unique object
     	// is created and added to hashmap.
-    	if (!arrays.containsKey(name)) {
+    	
+    	String typeT = name.replace("[]", "");	// get the T from T[]
+		resolveType(typeT);
+		// if we still here, T (of T[]) is already defined, so its OK to add T[]
+		if (!arrays.containsKey(name)) {
     		SArrayType array = new SArrayType(name);
     		arrays.put(name, array);
     		return array;
@@ -65,5 +69,10 @@ public class TypeTable {
     	else
     		classType = new SClassType(name);
     	classes.put(name, classType);
+    }
+    
+    // returns true iff the parameter is a previously-seen array type
+    public boolean isArrayType(SemanticType type){
+    	return arrays.containsKey(type.name) ? true : false;
     }
 }

@@ -6,6 +6,7 @@ public class NewArrayExpr extends Expr {
 
 	public NewArrayExpr(int line, Type type, Expr index) {
 		super(line);
+		type.arrayLvl++;
 		this.type = type;
 		this.index = index;
 	}
