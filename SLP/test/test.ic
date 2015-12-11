@@ -5,11 +5,11 @@ class Empty{
 
 class Base{
 	Derived derived;
-	int foo(Base b){}
+	int foo(Base b){return 8;}
 }
 class Derived extends Base{
 	Base base;
-	int foo(Derived d){}
+	int foo(Derived d){return 18;}
 }
 
 class Person{}
@@ -23,7 +23,7 @@ class Student extends Person{
 class Test extends Base{
 	boolean i;
 
-	void testShadowing(int j){
+	int testShadowing(int j){
 		Empty i;
 		Person p;
 		Student s;
@@ -40,7 +40,10 @@ class Test extends Base{
 		string str;
 		str = "hello world";
 		
-		if (str == str)
+		if (str == str){
+			return 9;
+		}
+		
 		
 		while(true){
 			int[] i;
@@ -50,7 +53,9 @@ class Test extends Base{
 				break;
 			}
 		}
-		return;
+		
+		return 0;
+		
 	}
 
 	static void main(string[] args){

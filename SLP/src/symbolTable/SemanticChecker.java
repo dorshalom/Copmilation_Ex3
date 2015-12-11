@@ -257,10 +257,11 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(Method method, Object d) {
-		
+		boolean hasReturn = false;
 		try{
-			SemanticType methodType = typTab.resolveType(method.type.getName());
-			//symTab.addEntry(new ParamSymbol("return", typTab.resolveType(method.type.getName())));
+			//SemanticType methodType = typTab.resolveType(method.type.getName());
+			symTab.addEntry(new ParamSymbol("return", typTab.resolveType(method.type.getName())));
+			SemanticType methodType = symTab.findEntryGlobal("return").type;
 			for (Formal f: method.formalList){
 				symTab.addEntry(new ParamSymbol(f.name, typTab.resolveType(f.type.getName())));
 			}
@@ -268,10 +269,19 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 			for (Stmt s: method.statementList){
 				SemanticType stmtType = (SemanticType) s.accept(this, null);
 				if (s instanceof ReturnStmt){
+					
 					if (methodType != stmtType ){
 						System.out.println(s.line + ": Semantic error: return type must be "+methodType.name);
+						System.exit(1);
 					}
+					hasReturn = true;
+					
 				}				
+			}
+			
+			if (!hasReturn && (methodType!= typTab.voidType)){
+				System.out.println(method.line + ": Semantic error: method must have a return statement of type "+methodType.name);
+				System.exit(1);
 			}
 		} catch (SemanticError se){
 			System.out.println(""+method.type.line + ": "+se);
@@ -334,12 +344,21 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(ReturnStmt returnStmt, Object d) {
-		if (returnStmt.expr == null){
-			return typTab.voidType;
+		
+		SemanticType returnType = symTab.findEntryGlobal("return").type;
+		SemanticType exprType = (SemanticType) returnStmt.expr.accept(this, null);
+		if ( returnType != exprType){
+			System.out.println(returnStmt.line + ": Semantic error: return type must be "+returnType.name);
+			System.exit(1);
 		}
-		else {
-			return returnStmt.expr.accept(this, null);
-		}
+		
+		return exprType;
+		
+		/*if (methodType != stmtType ){
+			System.out.println(s.line + ": Semantic error: return type must be "+methodType.name);
+			System.exit(1);
+		}*/
+
 	}
 
 	@Override
