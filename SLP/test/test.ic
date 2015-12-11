@@ -30,6 +30,8 @@ class Test extends Base{
 		boolean b1;
 		b1 = false;
 		
+		if(true && b1){
+		}
 		
 		p = s;
 		

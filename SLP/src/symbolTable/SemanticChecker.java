@@ -445,8 +445,11 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(IfStmt ifStmt, Object d) {
-		ifStmt.condition.accept(this, null);
-		
+		SemanticType conditionType = (SemanticType) ifStmt.condition.accept(this, null);
+		if(conditionType != typTab.booleanType){
+			System.out.println(ifStmt.line + ": Semantic error: if condition must be of type boolean");
+			System.exit(1);
+		}
 		symTab.enterScope();
 		ifStmt.thenStmt.accept(this, null);
 		symTab.exitScope();
@@ -456,13 +459,18 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 			ifStmt.elseStmt.accept(this, null);
 			symTab.exitScope();
 		}
-		return null;
+		
+
+		return typTab.booleanType;
 	}
 
 	@Override
 	public Object visit(WhileStmt whileStmt, Object d) {
-		whileStmt.condition.accept(this, null);
-		
+		SemanticType conditionType = (SemanticType) whileStmt.condition.accept(this, null);
+		if (conditionType != typTab.booleanType){
+			System.out.println(whileStmt.line + ": Semantic error: while condition must be of type boolean");
+			System.exit(1);
+		}
 		symTab.enterScope();
 		++loopLevel;
 		whileStmt.thenStmt.accept(this, null);
