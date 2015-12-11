@@ -25,6 +25,8 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	private ASTNode root;
 	private boolean mainDefined = false;
 	private int loopLevel = 0;
+	private boolean inStatic = false;
+	private SemanticType currentThisClass = null;
 	
 	public SemanticChecker(ASTNode root) {
 		this.root = root;
@@ -166,6 +168,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 		for (Class cl: program.classes){
 			ClassSymbol sym = null;
 			try{
+				//symTab.addEntry(new ParamSymbol("this", typTab.resolveType(cl.name)));
 				if (cl.superName != null) {
 					sym = new ClassSymbol(cl.name, cl.superName, typTab, symTab);
 				} else { // no superclass
@@ -225,6 +228,12 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(Class cl, Object d) {
+		try {
+			currentThisClass = typTab.resolveType(cl.name);
+		} catch (SemanticError e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		for (Method m: cl.methods){
 			try{
 				List<ParamSymbol> params = new ArrayList<ParamSymbol>();
@@ -259,7 +268,9 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	public Object visit(Method method, Object d) {
 		boolean hasReturn = false;
 		try{
-			//SemanticType methodType = typTab.resolveType(method.type.getName());
+			if (method.isStatic){
+				inStatic = true;
+			}
 			symTab.addEntry(new ParamSymbol("return", typTab.resolveType(method.type.getName())));
 			SemanticType methodType = symTab.findEntryGlobal("return").type;
 			for (Formal f: method.formalList){
@@ -422,7 +433,11 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	@Override
 	public Object visit(ArrayLocation arrayLoc, Object d) {
 		arrayLoc.array.accept(this, null);
-		arrayLoc.index.accept(this, null);
+		SemanticType indexType = (SemanticType) arrayLoc.index.accept(this, null);
+		if (indexType != typTab.intType) {
+			System.out.println(""+arrayLoc.line + ": Semantic error: array index is not of type int" );
+			System.exit(1);
+		}
 		return null;
 	}
 
@@ -524,7 +539,12 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(ThisExpr expr, Object d) {
-		return null;
+		if(inStatic){
+			System.out.println(""+expr.line + ": Semantic error: 'this' referenced in static method");
+			System.exit(1);
+		}
+		//return symTab.findEntryGlobal("this").type;
+		return currentThisClass;
 	}
 
 	@Override
@@ -535,6 +555,11 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	@Override
 	public Object visit(NewArrayExpr newArray, Object d) {
 		newArray.type.accept(this, null);
+		SemanticType indexType = (SemanticType) newArray.index.accept(this, null);
+		if (indexType != typTab.intType) {
+			System.out.println(""+newArray.line + ": Semantic error: array size is not of type int" );
+			System.exit(1);
+		}
 		newArray.index.accept(this, null);
 		return null;
 	}

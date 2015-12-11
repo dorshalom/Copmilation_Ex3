@@ -18,7 +18,23 @@ class Student extends Person{
 	
 }
 
+class MyTest {
 
+	int member;
+	
+	static int myfunc(int x){
+		int i;
+		
+		if (true){
+			int x;
+			return i;
+		}
+		return i;
+		
+		this.member = 8;
+	
+	}
+}
 
 class Test extends Base{
 	boolean i;
@@ -29,6 +45,8 @@ class Test extends Base{
 		Student s;
 		boolean b1;
 		b1 = false;
+		
+		Derived d;
 		
 		if(true && b1){
 		}
@@ -48,7 +66,8 @@ class Test extends Base{
 		
 		
 		while(true){
-			int[] i;
+			int[] i = new string[9];
+			i[5] = 2;
 			continue;
 			while(true){
 				Base[][] i;
