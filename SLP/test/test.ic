@@ -50,6 +50,7 @@ class Test extends Base{
 				break;
 			}
 		}
+		return;
 	}
 
 	static void main(string[] args){

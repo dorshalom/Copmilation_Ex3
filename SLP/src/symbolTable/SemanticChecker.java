@@ -257,16 +257,28 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(Method method, Object d) {
+		
 		try{
-			symTab.addEntry(new ParamSymbol("return", typTab.resolveType(method.type.getName())));
-			for (Formal f: method.formalList)
+			SemanticType methodType = typTab.resolveType(method.type.getName());
+			//symTab.addEntry(new ParamSymbol("return", typTab.resolveType(method.type.getName())));
+			for (Formal f: method.formalList){
 				symTab.addEntry(new ParamSymbol(f.name, typTab.resolveType(f.type.getName())));
+			}
+			
+			for (Stmt s: method.statementList){
+				SemanticType stmtType = (SemanticType) s.accept(this, null);
+				if (s instanceof ReturnStmt){
+					if (methodType != stmtType ){
+						System.out.println(s.line + ": Semantic error: return type must be "+methodType.name);
+					}
+				}				
+			}
 		} catch (SemanticError se){
 			System.out.println(""+method.type.line + ": "+se);
 			System.exit(1);
 		}
-		for (Stmt s: method.statementList)
-			s.accept(this, null);
+
+			
 		return null;
 	}
 	
@@ -322,9 +334,12 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(ReturnStmt returnStmt, Object d) {
-		if (returnStmt.expr != null)
-			returnStmt.expr.accept(this, null);
-		return null;
+		if (returnStmt.expr == null){
+			return typTab.voidType;
+		}
+		else {
+			return returnStmt.expr.accept(this, null);
+		}
 	}
 
 	@Override
