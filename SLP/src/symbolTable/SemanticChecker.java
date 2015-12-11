@@ -458,40 +458,24 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	}
 
 	@Override
+
 	public Object visit(LocalVarStmt localVar, Object d) {
+		
 		if(symTab.findEntryLocal(localVar.name) != null){
 			System.out.println(""+localVar.line + ": Semantic error: variable redefinition: "+localVar.name);
 			System.exit(1);
 		}
 		
-		if(localVar.init != null) {
-			localVar.init.accept(this, null);
-			try{
-				symTab.addEntry(new VarSymbol(localVar.name, typTab.resolveType(localVar.type.getName()),true));
-				if (!(typTab.resolveType(localVar.type.getName()).isLike(typTab.resolveType((String) localVar.init.accept(this, null))))){
-					
-				}
-			} catch (SemanticError se){
-				System.out.println(""+localVar.type.line + ": "+se);
-				System.exit(1);
-			}
-			
-
+		try{
+			symTab.addEntry(new VarSymbol(localVar.name, typTab.resolveType(localVar.type.getName())));
+		} catch (SemanticError se){
+			System.out.println(""+localVar.type.line + ": "+se);
+			System.exit(1);
 			
 		}
-		else {
-			try{
-				symTab.addEntry(new VarSymbol(localVar.name, typTab.resolveType(localVar.type.getName())));
-			} catch (SemanticError se){
-				System.out.println(""+localVar.type.line + ": "+se);
-				System.exit(1);
-			}
-		}
-		
-		
-
-		
-
+		// has initializer
+				if (localVar.init != null)
+					localVar.init.accept(this, null);
 		
 		return null;
 	}
