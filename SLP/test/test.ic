@@ -22,7 +22,7 @@ class MyTest {
 
 	int member;
 	
-	static int myfunc(int x){
+	int myfunc(int o){
 		int i;
 		
 		if (true){
@@ -32,8 +32,17 @@ class MyTest {
 		return i;
 		
 		this.member = 8;
+		
+		
 	
 	}
+	
+	void main(int l){
+	Person p;
+		myfunc(8,"hello","hwllo");
+	}
+	
+	
 }
 
 class Test extends Base{

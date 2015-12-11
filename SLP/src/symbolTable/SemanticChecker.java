@@ -381,13 +381,46 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(VirtCall virtCall, Object d) {
-		if (virtCall.location != null) { 
-			virtCall.location.accept(this, null);
+		SemanticType funcType = null;
+		
+		
+		// when call is local
+		if (virtCall.location == null) { 
+			MethodSymbol func = (MethodSymbol) symTab.findEntryGlobal(virtCall.funcName);
+			funcType = func.type;
+			List<SemanticType> callArgsTypes = new ArrayList<SemanticType>();
+			
+			for (Expr arg: virtCall.args){
+				SemanticType argType  = (SemanticType) arg.accept(this, null);
+				callArgsTypes.add(argType);
+			}
+			
+			if (!func.checkParamTypes(callArgsTypes)){
+	        	System.out.print(virtCall.line+": Semantic error: method " + virtCall.funcName+" expects "+func.params.size()+" argumnets");
+	        	if (func.params.size() > 0){
+	        		System.out.print(": (");
+		        	for (ParamSymbol p: func.params){
+		        		System.out.print(" "+p.type.name);
+		        	}
+		        	System.out.print(" )");
+	        	}
+	        	
+	        	System.exit(1);
+			}
 		}
 		
-		for (Expr arg: virtCall.args)
-			arg.accept(this, null);
-		return null;
+		//when call is external [when we have obj.funcName(...)]
+		if (virtCall.location != null) { 
+			virtCall.location.accept(this, null);
+			
+			
+			
+			
+			
+			
+		}
+		
+		return funcType;
 	}
 
 	@Override
@@ -443,6 +476,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(CallStmt callStmt, Object d) {
+		
 		callStmt.call.accept(this, null);
 		return null;
 	}

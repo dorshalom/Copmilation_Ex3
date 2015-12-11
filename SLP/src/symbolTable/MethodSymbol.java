@@ -8,7 +8,7 @@ import semanticTypes.*;
 // class method symbol for symbol table
 public class MethodSymbol extends Symbol {
 	public boolean isStatic;
-	private List<ParamSymbol> params;
+	public List<ParamSymbol> params;
 	 
 	// try to create a method symbol from given method signature. Fails if there are parameters with the same name
 	public MethodSymbol(String name, SemanticType type, List<ParamSymbol> params, boolean isStatic) throws SemanticError{
@@ -21,11 +21,11 @@ public class MethodSymbol extends Symbol {
 	}
 	
 	// checks if this method's params are type compatible with other method's params
-	public boolean checkParamTypes(List<ParamSymbol> params){
+	public boolean checkParamTypes(List<SemanticType> params){
 		if(this.params.size() != params.size())
 			return false;
 		for(int i=0; i<params.size(); i++){
-			if(!params.get(i).type.isLike(this.params.get(i).type))
+			if(!params.get(i).isLike(this.params.get(i).type))
 				return false;
 		}
 		return true;
@@ -38,5 +38,7 @@ public class MethodSymbol extends Symbol {
 				throw new SemanticError("parameter with this name already exists", param.name);
 		}
 		params.add(param);
-	}	
+	}
+	
+	
 }
