@@ -355,9 +355,14 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(ReturnStmt returnStmt, Object d) {
-		
+		SemanticType exprType;
 		SemanticType returnType = symTab.findEntryGlobal("return").type;
-		SemanticType exprType = (SemanticType) returnStmt.expr.accept(this, null);
+		if (returnStmt.expr == null){
+			exprType = typTab.voidType;
+		}
+		else{
+			exprType = (SemanticType) returnStmt.expr.accept(this, null);
+		}
 		if ( returnType != exprType){
 			System.out.println(returnStmt.line + ": Semantic error: return type must be "+returnType.name);
 			System.exit(1);
