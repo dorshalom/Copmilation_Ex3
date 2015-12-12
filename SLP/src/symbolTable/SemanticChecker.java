@@ -28,6 +28,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	private boolean inStatic = false;
 	private SemanticType currentThisClass = null;
 	private boolean writingToVar = false;
+	private int controlFlows = 0;
 	
 	public SemanticChecker(ASTNode root) {
 		this.root = root;
@@ -268,6 +269,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	@Override
 	public Object visit(Method method, Object d) {
 		boolean hasReturn = false;
+		controlFlows = 1;
 		try{
 			if (method.isStatic){
 				inStatic = true;
@@ -291,7 +293,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 				}				
 			}
 			
-			if (!hasReturn && (methodType!= typTab.voidType)){
+			if (methodType!= typTab.voidType && controlFlows > 0 && !hasReturn){
 				System.out.println(method.line + ": Semantic error: method must have a return statement of type "+methodType.name);
 				System.exit(1);
 			}
@@ -372,6 +374,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(ReturnStmt returnStmt, Object d) {
+		--controlFlows;
 		SemanticType exprType;
 		SemanticType returnType = symTab.findEntryGlobal("return").type;
 		if (returnStmt.expr == null){
@@ -539,6 +542,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(IfStmt ifStmt, Object d) {
+		++controlFlows;
 		SemanticType conditionType = (SemanticType) ifStmt.condition.accept(this, null);
 		if(conditionType != typTab.booleanType){
 			System.out.println(ifStmt.line + ": Semantic error: if condition must be of type boolean");
@@ -560,6 +564,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(WhileStmt whileStmt, Object d) {
+		++controlFlows;
 		SemanticType conditionType = (SemanticType) whileStmt.condition.accept(this, null);
 		if (conditionType != typTab.booleanType){
 			System.out.println(whileStmt.line + ": Semantic error: while condition must be of type boolean");
