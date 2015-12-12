@@ -451,7 +451,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 		
 		
 		}else {
-			VarSymbol res = (VarSymbol) symTab.findEntryGlobal(varLoc.name);
+			Symbol res = (Symbol) symTab.findEntryGlobal(varLoc.name);
 			if(res == null){
 				System.out.println(""+varLoc.line + ": Semantic error: undefined variable: " + varLoc.name);
 				System.exit(1);
