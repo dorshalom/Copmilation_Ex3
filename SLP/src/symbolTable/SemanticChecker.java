@@ -27,6 +27,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	private int loopLevel = 0;
 	private boolean inStatic = false;
 	private SemanticType currentThisClass = null;
+	private boolean writingToVar = false;
 	
 	public SemanticChecker(ASTNode root) {
 		this.root = root;
@@ -325,7 +326,9 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	public Object visit(AssignStmt assignStmt, Object d) {
 		
         // check location recursively
-        SemanticType locationType = (SemanticType) assignStmt.lhs.accept(this, null);
+        writingToVar = true;
+		SemanticType locationType = (SemanticType) assignStmt.lhs.accept(this, null);        
+		writingToVar = false;
         if (locationType == null) return null;
         // check assignment recursively
         SemanticType assignmentType = (SemanticType) assignStmt.rhs.accept(this, null);
@@ -336,20 +339,34 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
         	System.exit(1);
         }
         
-        // type check
-        // check that the assignment is of the same type / subtype of the location type
-       /* if (!assignmentType.subtypeOf(locationType)){
-                System.err.println(new SemanticError("type mismatch, not of type "+locationType.getName(),
-                                assignment.getLine(),
-                                assignmentType.getName()));
-                return null;
-        }
         
-        return true;
-		*/
-		
-		assignStmt.lhs.accept(this, null);
-		assignStmt.rhs.accept(this, null);
+        /* now we want to change isAssigned value of lhs to true*/
+        
+        // lhs is of type VarLocation
+        if (assignStmt.lhs instanceof VarLocation){
+        	//local var
+        	if (((VarLocation)assignStmt.lhs).location == null){
+            VarSymbol lhsVar = (VarSymbol)symTab.findEntryGlobal(((VarLocation)assignStmt.lhs).name);
+            lhsVar.isAssigned = true;
+        	}
+        	
+        	//external var
+        	else{
+	            
+				try{
+		           
+					typTab.resolveClassType(locationType.name);
+					ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(locationType.name);
+					FieldSymbol fs = cs.getFieldSymbolRec(((VarLocation)assignStmt.lhs).name);
+					fs.isAssigned = true;
+				}
+				catch (SemanticError se){
+	
+				}
+        	}
+        }    
+ 
+
 		return null;
 	}
 
@@ -418,11 +435,6 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 		if (virtCall.location != null) { 
 			virtCall.location.accept(this, null);
 			
-			
-			
-			
-			
-			
 		}
 		
 		return funcType;
@@ -430,7 +442,8 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(VarLocation varLoc, Object d) {
-		if (varLoc.location != null){ //external
+		//external
+		if (varLoc.location != null){ 
 			SemanticType locationType = (SemanticType) varLoc.location.accept(this, null);
 			if (locationType == null) return null;
 			try{
@@ -439,6 +452,13 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 				
 				try{
 					FieldSymbol fs = cs.getFieldSymbolRec(varLoc.name);
+					
+					/* check if location is assigned */
+					if(!writingToVar && !fs.isAssigned){
+						System.out.println(varLoc.line +": Semantic error: "+varLoc.name+" is not assigned");
+						System.exit(1);
+					}
+					
 					return fs.type;
 				}
 				catch (SemanticError se){
@@ -447,6 +467,8 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 					System.exit(1);
 				}
 				
+
+				
 			}
 			catch (SemanticError se){
 				//there is no class like this
@@ -454,11 +476,17 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 				System.exit(1);
 			}
 		
-		
+		// local
 		}else {
-			Symbol res = (Symbol) symTab.findEntryGlobal(varLoc.name);
+			VarSymbol res = (VarSymbol) symTab.findEntryGlobal(varLoc.name);
 			if(res == null){
 				System.out.println(""+varLoc.line + ": Semantic error: undefined variable: " + varLoc.name);
+				System.exit(1);
+			}
+			
+			/* check if location is assigned */
+			if(!writingToVar && !res.isAssigned){
+				System.out.println(varLoc.line +": Semantic error: "+varLoc.name+" is not assigned");
 				System.exit(1);
 			}
 			return res.type;
@@ -575,16 +603,34 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 		}
 		
 		try{
+			if (localVar.init == null){
 			symTab.addEntry(new VarSymbol(localVar.name, typTab.resolveType(localVar.type.getName())));
+			}
+			else {
+				symTab.addEntry(new VarSymbol(localVar.name, typTab.resolveType(localVar.type.getName()),true));
+			}
 		} catch (SemanticError se){
 			System.out.println(""+localVar.type.line + ": "+se);
 			System.exit(1);
 			
 		}
-		// has initializer
-				if (localVar.init != null)
-					localVar.init.accept(this, null);
 		
+		// has initialiser
+		if (localVar.init != null){
+			SemanticType assignType = (SemanticType) localVar.init.accept(this, null);
+		
+			try {
+				if(!assignType.isLike(typTab.resolveType(localVar.type.getName()))){
+					System.err.println(localVar.line+": Semantic error: type mismatch, not of type "+localVar.type.getName());
+					System.exit(1);
+				}
+			} catch (SemanticError se) {
+				System.out.println(""+localVar.type.line + ": "+se);
+				System.exit(1);
+			}
+		}
+				
+				
 		return null;
 	}
 
