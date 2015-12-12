@@ -401,11 +401,21 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	@Override
 	public Object visit(StaticCall staticCall, Object d) {
 		SemanticType funcType = null;
-		
+		MethodSymbol func = null;
+
 		if (staticCall.className != null) { 
-			MethodSymbol func = (MethodSymbol) symTab.findEntryGlobal(staticCall.funcName);
+			ClassSymbol cl = (ClassSymbol) symTab.findEntryGlobal(staticCall.className);
+			if (cl==null){
+				System.out.println(staticCall.line+": Semantic error: class "+staticCall.className+" does not exist");
+				System.exit(1);
+			}
+			try {
+				func = cl.getMethodSymbolRec(staticCall.funcName);
+			} catch (SemanticError e) {
+				
+			}
 			if (func==null){
-				System.out.println(staticCall.line+": Semantic error: method "+staticCall.funcName+" does not exist");
+				System.out.println(staticCall.line+": Semantic error: method "+staticCall.funcName+" does not exist in class "+cl.name );
 				System.exit(1);
 			}
 			funcType = func.type;
@@ -437,42 +447,63 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	@Override
 	public Object visit(VirtCall virtCall, Object d) {
 		SemanticType funcType = null;
-		
-		
+		MethodSymbol func = null;
+		List<SemanticType> callArgsTypes = new ArrayList<SemanticType>();
+
 		// when call is local
 		if (virtCall.location == null) { 
-			MethodSymbol func = (MethodSymbol) symTab.findEntryGlobal(virtCall.funcName);
+			func = (MethodSymbol) symTab.findEntryGlobal(virtCall.funcName);
 			if (func==null){
 				System.out.println(virtCall.line+": Semantic error: method "+virtCall.funcName+" does not exist");
 				System.exit(1);
 			}
-			funcType = func.type;
-			List<SemanticType> callArgsTypes = new ArrayList<SemanticType>();
-			
-			for (Expr arg: virtCall.args){
-				SemanticType argType  = (SemanticType) arg.accept(this, null);
-				callArgsTypes.add(argType);
-			}
-			
-			if (!func.checkParamTypes(callArgsTypes)){
-	        	System.out.print(virtCall.line+": Semantic error: method " + virtCall.funcName+" expects "+func.params.size()+" argumnets");
-	        	if (func.params.size() > 0){
-	        		System.out.print(": (");
-		        	for (ParamSymbol p: func.params){
-		        		System.out.print(" "+p.type.name);
-		        	}
-		        	System.out.print(" )");
-	        	}
-	        	
-	        	System.exit(1);
-			}
 		}
 		
 		//when call is external [when we have obj.funcName(...)]
-		if (virtCall.location != null) { 
-			virtCall.location.accept(this, null);
-			
+		else { 
+			SemanticType locationType = (SemanticType) virtCall.location.accept(this, null);
+			if (locationType == null) return null;
+			try{
+				typTab.resolveClassType(locationType.name);
+				ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(locationType.name);
+				
+				try{
+					func = cs.getMethodSymbolRec(virtCall.funcName)	;			
+				}
+				catch (SemanticError se){
+					// there is no such method in that class
+					System.out.println(virtCall.line +": Semantic error: there is no method "+ virtCall.funcName +" in class "+cs.name);
+					System.exit(1);
+				}				
+			}
+			catch (SemanticError se){
+				//there is no class like this
+				System.out.println(virtCall.line +": Semantic error: "+locationType+" does not exist");
+				System.exit(1);
+			}
 		}
+
+		// check args types
+		funcType = func.type;
+		
+		for (Expr arg: virtCall.args){
+			SemanticType argType  = (SemanticType) arg.accept(this, null);
+			callArgsTypes.add(argType);
+		}
+		
+		if (!func.checkParamTypes(callArgsTypes)){
+        	System.out.print(virtCall.line+": Semantic error: method " + virtCall.funcName+" expects "+func.params.size()+" argumnets");
+        	if (func.params.size() > 0){
+        		System.out.print(": (");
+	        	for (ParamSymbol p: func.params){
+	        		System.out.print(" "+p.type.name);
+	        	}
+	        	System.out.print(" )");
+        	}
+        	
+        	System.exit(1);
+		}
+		
 		
 		return funcType;
 	}
