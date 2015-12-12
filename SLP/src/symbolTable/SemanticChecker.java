@@ -352,6 +352,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
             lhsVar.isAssigned = true;
         	}
         	
+        	/*
         	//external var
         	else{
 	            
@@ -365,7 +366,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 				catch (SemanticError se){
 	
 				}
-        	}
+        	}*/
         }    
  
 
@@ -399,9 +400,38 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(StaticCall staticCall, Object d) {
-		for (Expr arg: staticCall.args)
-			arg.accept(this, null);
-		return null;
+		SemanticType funcType = null;
+		
+		if (staticCall.className != null) { 
+			MethodSymbol func = (MethodSymbol) symTab.findEntryGlobal(staticCall.funcName);
+			if (func==null){
+				System.out.println(staticCall.line+": Semantic error: method "+staticCall.funcName+" does not exist");
+				System.exit(1);
+			}
+			funcType = func.type;
+			List<SemanticType> callArgsTypes = new ArrayList<SemanticType>();
+			
+			for (Expr arg: staticCall.args){
+				SemanticType argType  = (SemanticType) arg.accept(this, null);
+				callArgsTypes.add(argType);
+			}
+			
+			if (!func.checkParamTypes(callArgsTypes)){
+	        	System.out.print(staticCall.line+": Semantic error: method " + staticCall.funcName+" expects "+func.params.size()+" argumnets");
+	        	if (func.params.size() > 0){
+	        		System.out.print(": (");
+		        	for (ParamSymbol p: func.params){
+		        		System.out.print(" "+p.type.name);
+		        	}
+		        	System.out.print(" )");
+	        	}
+	        	
+	        	System.exit(1);
+			}
+		}
+
+		
+		return funcType;
 	}
 
 	@Override
@@ -412,6 +442,10 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 		// when call is local
 		if (virtCall.location == null) { 
 			MethodSymbol func = (MethodSymbol) symTab.findEntryGlobal(virtCall.funcName);
+			if (func==null){
+				System.out.println(virtCall.line+": Semantic error: method "+virtCall.funcName+" does not exist");
+				System.exit(1);
+			}
 			funcType = func.type;
 			List<SemanticType> callArgsTypes = new ArrayList<SemanticType>();
 			
@@ -454,14 +488,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 				ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(locationType.name);
 				
 				try{
-					FieldSymbol fs = cs.getFieldSymbolRec(varLoc.name);
-					
-					/* check if location is assigned */
-					if(!writingToVar && !fs.isAssigned){
-						System.out.println(varLoc.line +": Semantic error: "+varLoc.name+" is not assigned");
-						System.exit(1);
-					}
-					
+					FieldSymbol fs = cs.getFieldSymbolRec(varLoc.name);					
 					return fs.type;
 				}
 				catch (SemanticError se){
@@ -481,16 +508,20 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 		
 		// local
 		}else {
-			VarSymbol res = (VarSymbol) symTab.findEntryGlobal(varLoc.name);
+			Symbol res = (Symbol) symTab.findEntryGlobal(varLoc.name);
 			if(res == null){
 				System.out.println(""+varLoc.line + ": Semantic error: undefined variable: " + varLoc.name);
 				System.exit(1);
 			}
 			
 			/* check if location is assigned */
-			if(!writingToVar && !res.isAssigned){
-				System.out.println(varLoc.line +": Semantic error: "+varLoc.name+" is not assigned");
-				System.exit(1);
+			if (!(res instanceof FieldSymbol)){
+				if (res instanceof VarSymbol){
+					if(!writingToVar && !((VarSymbol)res).isAssigned){
+						System.out.println(varLoc.line +": Semantic error: "+varLoc.name+" is not assigned");
+						System.exit(1);
+					}
+				}
 			}
 			return res.type;
 			
