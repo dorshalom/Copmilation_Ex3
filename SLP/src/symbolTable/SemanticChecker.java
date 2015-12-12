@@ -542,7 +542,8 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(IfStmt ifStmt, Object d) {
-		++controlFlows;
+		if(controlFlows > 0)
+			++controlFlows;
 		SemanticType conditionType = (SemanticType) ifStmt.condition.accept(this, null);
 		if(conditionType != typTab.booleanType){
 			System.out.println(ifStmt.line + ": Semantic error: if condition must be of type boolean");
@@ -564,7 +565,8 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 	@Override
 	public Object visit(WhileStmt whileStmt, Object d) {
-		++controlFlows;
+		if(controlFlows > 0)
+			++controlFlows;
 		SemanticType conditionType = (SemanticType) whileStmt.condition.accept(this, null);
 		if (conditionType != typTab.booleanType){
 			System.out.println(whileStmt.line + ": Semantic error: while condition must be of type boolean");
