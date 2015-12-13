@@ -28,9 +28,9 @@ class MyTest {
 		
 		if (true){
 			int x;
-			return i;
+			return member;
 		}
-		return i;
+		return 1;
 		
 		this.member = 8;
 		
@@ -61,7 +61,7 @@ class Test extends Base{
 		if(true && b1){
 		}
 		
-		p = s;
+		//p = s;
 		
 		if((b1 && true) || b1){}
 		
@@ -76,7 +76,7 @@ class Test extends Base{
 		
 		
 		while(true){
-			int[] i = new string[9];
+			int[] i = new int[9];
 			i[5] = 2;
 			continue;
 			while(true){
@@ -97,6 +97,7 @@ class Test extends Base{
 
 		b = new Base();
 		b = new Derived();
+		i = new int[6];
 		b.derived.i = i.length;
 		i = new int[7];
 		j = new int[][9];

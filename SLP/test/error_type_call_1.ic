@@ -44,7 +44,9 @@ class C {
   static void main(string[] args) {
   	A[][] arr;
 	A a;
-	int x;
+	int x = 5;
+	a = new A();
+	arr = new A[][5];
 	a.vfunc(arr[5][x],x,a);
   }
 }

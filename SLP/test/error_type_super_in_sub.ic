@@ -34,23 +34,15 @@ class A {
 class B extends A {
     int j;
 	C c;
-
-    B vfunc(A a, int max, int val) {
-    }
-    
-    void foo(){
-    	A a;
-    	C c;
-    	vfunc(a, 1000, 20);
-    }
 }
 
 class C {
   A[][] farr;
   static void main(string[] args) {
   	A[][] arr;
-	A a;
-	B b;
+	A a = new A();
+	B b = new B();
+	a = b;
 	b = a;
   }
 }

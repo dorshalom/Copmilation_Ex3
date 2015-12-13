@@ -443,13 +443,13 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 			}
 			
 			if (!func.checkParamTypes(callArgsTypes)){
-	        	System.out.print(staticCall.line+": Semantic error: method " + staticCall.funcName+" expects "+func.params.size()+" argumnets");
+	        	System.out.print(staticCall.line+": Semantic error: method " + staticCall.funcName+" expects "+func.params.size()+" arguments");
 	        	if (func.params.size() > 0){
 	        		System.out.print(": (");
 		        	for (ParamSymbol p: func.params){
 		        		System.out.print(" "+p.type.name);
 		        	}
-		        	System.out.print(" )");
+		        	System.out.println(" )");
 	        	}
 	        	
 	        	System.exit(1);
@@ -512,13 +512,13 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 		}
 		
 		if (!func.checkParamTypes(callArgsTypes)){
-        	System.out.print(virtCall.line+": Semantic error: method " + virtCall.funcName+" expects "+func.params.size()+" argumnets");
+        	System.out.print(virtCall.line+": Semantic error: method " + virtCall.funcName+" expects "+func.params.size()+" arguments");
         	if (func.params.size() > 0){
         		System.out.print(": (");
 	        	for (ParamSymbol p: func.params){
 	        		System.out.print(" "+p.type.name);
 	        	}
-	        	System.out.print(" )");
+	        	System.out.println(" )");
         	}
         	
         	System.exit(1);
