@@ -40,11 +40,12 @@ class B extends A {
 	C c;
 
     B vfunc(A a, int max, int val) {
+		return new B();
     }
     
     void foo(){
-    	A a;
-    	C c;
+    	A a = new A();
+    	C c = new C();
     	a.vfunc(a, 1000, 20);
     	
     	a = 100-c;

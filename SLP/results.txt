@@ -1,7 +1,7 @@
 "error_break.ic" 
-27: Semantic error: Operands must be of the same type
+47: Semantic error: break statement outside of loop
 "error_continue.ic" 
-27: Semantic error: Operands must be of the same type
+30: Semantic error: continue statement outside of loop
 "error_double_dec_var.ic" 
 19: Semantic error: variable redefinition: j
 "error_field_double_dec.ic" 
@@ -13,9 +13,9 @@
 "error_overloading.ic" 
 39: Semantic error: method defined in super, overloading not allowed: sfunc
 "error_return_1.ic" 
-27: Semantic error: Operands must be of the same type
+47: Semantic error: return type must be void
 "error_return_2.ic" 
-27: Semantic error: Operands must be of the same type
+29: Semantic error: return type must be B
 "error_scope_1.ic" 
 17: Semantic error: undefined variable: k
 "error_scope_2.ic" 
@@ -25,40 +25,40 @@
 "error_shadowing.ic" 
 49: Semantic error: field name already in use: sfunc
 "error_static_call_to_virtual_method.ic" 
-28: Semantic error: Operands must be of the same type
+16: Semantic error: virtual method invocation without identifier, in static scope
 "error_three_mains.ic" 
 49: Semantic error: method already defined, method overloading not supported: main
 "error_two_mains.ic" 
 53: Semantic error: main function already defined
 "error_two_mains_args_name.ic" 
-27: Semantic error: Operands must be of the same type
+Passed semantic checks successfully!
+
 "error_type_call_1.ic" 
-27: Semantic error: Operands must be of the same type
+50: Semantic error: method vfunc expects 3 arguments: ( A int int )
 "error_type_call_2.ic" 
-27: Semantic error: Operands must be of the same type
+49: Semantic error: method sfunc expects 1 arguments: ( boolean )
 "error_type_call_3.ic" 
-27: Semantic error: Operands must be of the same type
+44: Semantic error: method vfunc expects 3 arguments: ( A int int )
 "error_type_call_4.ic" 
-27: Semantic error: Operands must be of the same type
+45: Semantic error: type mismatch, not of type C
 "error_type_comparison.ic" 
-33: Semantic error: Operands must be of the same type
+53: Semantic error: Operands must be of similar type
 "error_type_complex_1.ic" 
-Error in line 48, column 34 : Syntax error
-Error in line 48, column 34 : Couldn't repair and continue parse
+49: Semantic error: type mismatch, not of type int
 "error_type_dimensions.ic" 
-33: Semantic error: Operands must be of the same type
+54: Semantic error: array access to non-array type
 "error_type_method_literal.ic" 
-27: Semantic error: Operands must be of the same type
+49: Semantic error: method vfunc expects 3 arguments: ( A int int )
 "error_type_operation.ic" 
-29: Semantic error: Operands must be of the same type
+51: Semantic error: Operands must be of type int
 "error_type_operation_1.ic" 
-29: Semantic error: Operands must be of the same type
+51: Semantic error: Operands must be of type int
 "error_type_operation_2.ic" 
-29: Semantic error: Operands must be of the same type
+51: Semantic error: Operands must be of type int
 "error_type_operation_3.ic" 
-29: Semantic error: Operands must be of the same type
+50: Semantic error: Operands must be of type int
 "error_type_operation_4.ic" 
-29: Semantic error: Operands must be of the same type
+50: Semantic error: Operands must be of type int
 "error_type_operation_5.ic" 
 29: Semantic error: Operands must be of type boolean
 "error_type_operation_7.ic" 
@@ -68,46 +68,29 @@ Error in line 48, column 34 : Couldn't repair and continue parse
 "error_type_simple_2.ic" 
 8: Semantic error: type mismatch, not of type boolean
 "error_type_simple_3.ic" 
-27: Semantic error: Operands must be of the same type
+39: Semantic error: type mismatch, not of type C
 "error_type_simple_4.ic" 
-27: Semantic error: Operands must be of the same type
+37: Semantic error: type mismatch, not of type int
 "error_type_super_in_sub.ic" 
-27: Semantic error: Operands must be of the same type
+46: Semantic error: type mismatch, not of type B
 "example1.ic" 
-27: Semantic error: Operands must be of the same type
+Passed semantic checks successfully!
+
 "example2.ic" 
-26: Semantic error: Operands must be of the same type
-"example_priorities.ic" 
-1: Semantic error: no main method found
-"p1.ic" 
-1: Semantic error: no main method found
-"p2.ic" 
-1: Semantic error: no main method found
-"p3.ic" 
-1: Semantic error: no main method found
-"p4.ic" 
-1: Semantic error: no main method found
-"p5.ic" 
-1: Semantic error: no main method found
-"p6.ic" 
-1: Semantic error: no main method found
-"p7.ic" 
-1: Semantic error: no main method found
-"p8.ic" 
-1: Semantic error: no main method found
-"p9.ic" 
-1: Semantic error: no main method found
+Passed semantic checks successfully!
+
 "Quicksort.ic" 
 Passed semantic checks successfully!
 
 "Sieve.ic" 
 Passed semantic checks successfully!
 
-"test - Copy.ic" 
-3: Semantic error: super class is undefined: Object
 "test.ic" 
 Passed semantic checks successfully!
 
 "testReturn.ic" 
+Passed semantic checks successfully!
+
+"unary_ok.ic" 
 Passed semantic checks successfully!
 

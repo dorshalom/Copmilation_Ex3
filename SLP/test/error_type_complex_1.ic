@@ -36,15 +36,16 @@ class B extends A {
 	C c;
 
     B vfunc(A a, int max, int val) {
+		return new B();
     }
 }
 
 class C {
   A[][] arr;
   static void main(string[] args) {
-    A[][] arr;
-	A a;
-	int x;
-	a.vfunc(arr[5][x],x,x).j = (new c()).farr[2][15].str;
+    A[][] arr = new A[][5];
+	A a = new A();
+	int x = 5;
+	a.vfunc(arr[5][x],x,x).j = (new C()).arr[2][15].str;
   }
 }

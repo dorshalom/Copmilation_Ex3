@@ -43,12 +43,12 @@ class B extends A {
     int j;
 	C c;
 
-    B vfunc(A a, int max, int val) {
+    void vfunc(A a, int max, int val) {
     }
     
     void foo(){
-    	string a;
-    	B b;
+    	string a = "abc";
+    	B b = new B();
     	
     	boolean bool = (a != b);
     }
