@@ -318,7 +318,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 			System.exit(1);
 		}
 
-			
+		inStatic = false;	
 		return null;
 	}
 	
