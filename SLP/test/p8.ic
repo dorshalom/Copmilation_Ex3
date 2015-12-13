@@ -1,0 +1,11 @@
+class A{
+	static void main(string [] arg){
+		string [][] sA = new string[][100];
+		int a = 3;
+		boolean booly = true;
+	}
+
+	static int f(int x, boolean booly){
+		{{{{{{int x;}}}}}} 
+	}
+}

@@ -1,0 +1,18 @@
+class A {
+	string str;
+
+	static int f(string [][] str, int x, boolean booly){
+		int bla;
+		if (1<2) {
+			int x;
+		} else {
+			string [] [] [] [] [] sArr;
+		}
+		return 7;
+	} 
+}
+
+class B extends A{
+	static void main(string [] arg){
+	} 
+}
