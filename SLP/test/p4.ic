@@ -1,0 +1,20 @@
+class A {
+	string str;
+
+	static int f(){
+		if (1<2) {
+			string boolThen;
+			{ int aThen;}
+		} else {
+			string boolElse;
+			{int aElse;}
+		}
+		return 7;
+	} 
+}
+
+class B {
+	static void main(string [] arg){
+		A.f();
+	} 
+}

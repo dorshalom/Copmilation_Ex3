@@ -25,7 +25,6 @@ public class Main {
 			Parser parser = new Parser(scanner);
 
 			Symbol parseSymbol = parser.parse();
-			//System.out.println("Parsed " + args[0] + " successfully!\n");
 			Program root = (Program) parseSymbol.value;
 			
 			// Pretty-print the program to System.out
@@ -34,7 +33,7 @@ public class Main {
 			
 			SemanticChecker checker = new SemanticChecker(root);
 			checker.start();
-			System.out.println("\nPassed semantic checks successfully!\n");
+			System.out.println("Passed semantic checks successfully!\n");
 			
 		} catch (Exception e) {
 			e.printStackTrace();

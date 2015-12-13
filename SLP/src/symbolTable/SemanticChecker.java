@@ -337,7 +337,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
         if (assignmentType == null) return null;
         
         if(!assignmentType.isLike(locationType)){
-        	System.err.println(assignStmt.line+": Semantic error: type mismatch, not of type "+locationType.name);
+        	System.out.println(assignStmt.line+": Semantic error: type mismatch, not of type "+locationType.name);
         	System.exit(1);
         }
         
@@ -690,7 +690,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 		
 			try {
 				if(!assignType.isLike(typTab.resolveType(localVar.type.getName()))){
-					System.err.println(localVar.line+": Semantic error: type mismatch, not of type "+localVar.type.getName());
+					System.out.println(localVar.line+": Semantic error: type mismatch, not of type "+localVar.type.getName());
 					System.exit(1);
 				}
 			} catch (SemanticError se) {

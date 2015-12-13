@@ -25,7 +25,7 @@ parser code  {:
             }
         }
         m.append(" : "+message);
-        System.err.println(m);
+        System.out.println(m);
     }
    
     public void report_fatal_error(String message, Object info) {
