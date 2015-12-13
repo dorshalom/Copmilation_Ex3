@@ -104,8 +104,24 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	
 	@Override
 	public Object visit(UnaryOpExpr unary, Object d) {
-		unary.rightOp.accept(this, null);
-		return null;
+		SemanticType operandType = (SemanticType) unary.rightOp.accept(this, null);
+		if (unary.operator == UnaryOpsEnum.UMINUS){
+			if(operandType == typTab.intType)
+				return typTab.intType;
+			else{
+				System.out.println(unary.line+": Semantic error: Operand must be of type int");
+	        	System.exit(1);
+			}	
+		}
+		else{	// operator !
+			if(operandType == typTab.booleanType)
+				return typTab.booleanType;
+			else{
+				System.out.println(unary.line+": Semantic error: Operand must be of type boolean");
+	        	System.exit(1);
+			}
+		}
+		return null;	// will never get here
 	}
 
 	@Override
