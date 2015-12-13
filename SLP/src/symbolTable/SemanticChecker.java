@@ -160,8 +160,8 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	        return typTab.intType;
 	    
 		case "==": case "!=":
-	        if(!leftOpType.name.equals(rightOpType.name)){
-	        	System.out.println(binary.line+": Semantic error: Operands must be of the same type");
+	        if(! (leftOpType.isLike(rightOpType) || (rightOpType.isLike(leftOpType))) ){
+	        	System.out.println(binary.line+": Semantic error: Operands must be of similar type");
 	        	System.exit(1);
 	        }
 	        return typTab.booleanType;
