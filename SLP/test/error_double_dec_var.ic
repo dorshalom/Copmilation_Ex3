@@ -45,7 +45,7 @@ class B extends A {
     int j;
 	C c;
 
-    B vfunc(A a, int max, int val) {
+    void vfunc(A a, int max, int val) {
     }
     
     void foo(){

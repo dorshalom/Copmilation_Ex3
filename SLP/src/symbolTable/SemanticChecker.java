@@ -248,9 +248,9 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	public Object visit(Class cl, Object d) {
 		try {
 			currentThisClass = typTab.resolveType(cl.name);
-		} catch (SemanticError e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (SemanticError se) {
+			System.out.println(""+cl.line + ": "+se);
+			System.exit(1);
 		}
 		for (Method m: cl.methods){
 			try{
@@ -266,7 +266,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 		}
 		for (Field f: cl.fields){
 			try{
-			symTab.addEntry(new FieldSymbol(f.name, typTab.resolveType(f.type.getName())));
+				symTab.addEntry(new FieldSymbol(f.name, typTab.resolveType(f.type.getName())));
 			} catch (SemanticError se){
 				System.out.println(""+f.line + ": "+se);
 				System.exit(1);
@@ -468,6 +468,10 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 
 		// when call is local
 		if (virtCall.location == null) { 
+			if (inStatic){
+				System.out.println(virtCall.line+": Semantic error: virtual method invocation without identifier, in static scope");
+				System.exit(1);
+			}
 			func = (MethodSymbol) symTab.findEntryGlobal(virtCall.funcName);
 			if (func==null){
 				System.out.println(virtCall.line+": Semantic error: method "+virtCall.funcName+" does not exist");

@@ -36,12 +36,13 @@ class B extends A {
     int j;
 	C c;
 
-    B vfunc(A a, int max, int val) {
+    void vfunc(A a, int max, int val) {
     }
     
     void foo(){
     	A a;
     	C c;
+		a = new A();
     	vfunc(a, 1000, 20);
     }
 }
