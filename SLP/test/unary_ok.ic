@@ -1,0 +1,10 @@
+class C{
+	boolean[] j;
+
+	static void main(string[] args){
+		boolean i;
+		C c;
+		c = new C();
+		i = !c.j[0];
+	}
+}
