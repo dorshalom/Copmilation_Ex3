@@ -1,0 +1,51 @@
+class MyClass2{
+	int i;
+	int s;
+	
+	string getint(){
+		int i;
+		return "hello";
+	}
+	
+	
+}
+
+class MyClass1 extends MyClass2{
+	
+	int j;
+	string k;
+	int getint(){
+		int i;
+		i=0;
+		return 9;
+	}
+}
+
+
+
+
+
+class MyClass3{
+	
+	void myfunc(){
+		MyClass1 m1 = new MyClass1();
+		MyClass2 m2 = new MyClass2();
+		int s = 9;
+		int i =0;
+		MyClass1[] arr1;
+		arr1 = new MyClass1[9];
+		MyClass1[] arr2 = new MyClass1[9];
+		if (m1.i==s){
+		}
+		
+		
+	
+	}
+	
+	
+	static void main(string[] args) { 
+	}
+
+
+
+}
