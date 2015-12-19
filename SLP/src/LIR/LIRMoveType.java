@@ -1,0 +1,11 @@
+package LIR;
+
+public enum LIRMoveType {
+	EXPLICIT,
+	STATEMENT,
+	ARRAYLOC,
+	LOCALVARLOC,
+	EXTERNALVARLOC,
+	REGISTER,
+	LITERAL;
+}
