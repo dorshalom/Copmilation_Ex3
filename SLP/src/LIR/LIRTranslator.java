@@ -1,5 +1,8 @@
 package LIR;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import slp.ArrayLocation;
 import slp.AssignStmt;
 import slp.BinaryOpExpr;
@@ -12,6 +15,7 @@ import slp.Formal;
 import slp.IfStmt;
 import slp.LengthExpr;
 import slp.LiteralExpr;
+import slp.LiteralsEnum;
 import slp.LocalVarStmt;
 import slp.Method;
 import slp.NewArrayExpr;
@@ -30,6 +34,12 @@ import slp.WhileStmt;
 
 public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
+	
+	// count the number of string literals we have seen
+	protected int strLiteralsNumber = 0;
+	// map each literal string to the format 'str[i]'
+	protected Map<String,String> strLiterals = new HashMap<String,String>();
+	
 	@Override
 	public LIRUpType visit(UnaryOpExpr expr, Integer d) {
 		// TODO Auto-generated method stub
@@ -182,9 +192,29 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
 	@Override
 	public LIRUpType visit(LiteralExpr expr, Integer d) {
-		// TODO Auto-generated method stub
-		return null;
+		String strLiteral = "";
+		LiteralsEnum type = expr.type;
+		if (type == LiteralsEnum.QUOTE){
+			String strVal = ((String) expr.value).replaceAll("\n", "\\\\n");
+			if (!strLiterals.containsKey(strVal))
+				strLiterals.put(strVal, "str"+(strLiteralsNumber++));
+			strLiteral = strLiterals.get(strVal);	
+		}	
+		if (type == LiteralsEnum.INTEGER){
+			strLiteral = expr.value.toString();
+		}
+		if (type == LiteralsEnum.NULL){
+			strLiteral = "0";
+		}
+		if (type == LiteralsEnum.FALSE){
+			strLiteral = "0";
+		}
+		if (type == LiteralsEnum.TRUE){
+			strLiteral = "1";
+		}		
+		return new LIRUpType("", LIRAstNodeType.LITERAL,strLiteral);
 	}
+	
 
 
 }

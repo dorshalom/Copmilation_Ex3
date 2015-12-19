@@ -4,14 +4,14 @@ package LIR;
 public class LIRUpType {
 	public String lirCode;
 	public String register;
-	public LIRMoveType moveType;
+	public LIRAstNodeType astNodeType;
 	
 	
 	
-	public LIRUpType(String lirCode, LIRMoveType moveType, String register) {
+	public LIRUpType(String lirCode, LIRAstNodeType astNodeType, String register) {
 		super();
 		this.lirCode = lirCode;
-		this.moveType = astType;
+		this.astNodeType = astNodeType;
 		this.register = register;
 	}
 	

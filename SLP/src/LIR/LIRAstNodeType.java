@@ -1,6 +1,6 @@
 package LIR;
 
-public enum LIRMoveType {
+public enum LIRAstNodeType {
 	EXPLICIT,
 	STATEMENT,
 	ARRAYLOC,
