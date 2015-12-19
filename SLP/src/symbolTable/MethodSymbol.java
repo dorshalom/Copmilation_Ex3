@@ -19,6 +19,15 @@ public class MethodSymbol extends Symbol {
 			addParamSymbol(p);
 		}
 	}
+	// try to create a method symbol from given method signature. Fails if there are parameters with the same name, with offset
+	public MethodSymbol(String name, SemanticType type, List<ParamSymbol> params, boolean isStatic,int o) throws SemanticError{
+		super(name, type,o);
+		this.isStatic = isStatic;
+		this.params = new ArrayList<ParamSymbol>();
+		for(ParamSymbol p: params){
+			addParamSymbol(p);
+		}
+	}
 	
 	// checks if this method's params are type compatible with other method's params
 	public boolean checkParamTypes(List<SemanticType> params){

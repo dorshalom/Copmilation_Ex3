@@ -30,10 +30,10 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 	private boolean writingToVar = false;
 	private int controlFlows = 0;
 	
-	public SemanticChecker(ASTNode root) {
+	public SemanticChecker(ASTNode root, SymbolTable symtab,TypeTable typtab) {
 		this.root = root;
-		symTab = new SymbolTable();
-		typTab = new TypeTable();
+		this.symTab = symtab;
+		this.typTab = typtab;
 		
 		addLibraryClass();
 	}
@@ -62,38 +62,38 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 			List<ParamSymbol> params = new ArrayList<ParamSymbol>();
 
 			// void param
-			sym.addMethodSymbol("readi", typTab.intType, params, true);
-			sym.addMethodSymbol("readln", typTab.stringType, params, true);
-			sym.addMethodSymbol("eof", typTab.booleanType, params, true);
-			sym.addMethodSymbol("time", typTab.intType, params, true);
+			sym.addMethodSymbol("readi", typTab.intType, params, true,-1);
+			sym.addMethodSymbol("readln", typTab.stringType, params, true,-1);
+			sym.addMethodSymbol("eof", typTab.booleanType, params, true,-1);
+			sym.addMethodSymbol("time", typTab.intType, params, true,-1);
 			
 			// (string) param
 			params.add(new ParamSymbol("s", typTab.stringType));
-			sym.addMethodSymbol("print", typTab.voidType, params, true);
-			sym.addMethodSymbol("println", typTab.voidType, params, true);
-			sym.addMethodSymbol("stoa", typTab.resolveType("int[]"), params, true);
+			sym.addMethodSymbol("print", typTab.voidType, params, true,-1);
+			sym.addMethodSymbol("println", typTab.voidType, params, true,-1);
+			sym.addMethodSymbol("stoa", typTab.resolveType("int[]"), params, true,-1);
 			
 			// (string, int) params
 			params.add(new ParamSymbol("n", typTab.intType));
-			sym.addMethodSymbol("stoi", typTab.intType, params, true);
+			sym.addMethodSymbol("stoi", typTab.intType, params, true,-1);
 			
 			// (int) param
 			params.clear();
 			params.add(new ParamSymbol("i", typTab.intType));
-			sym.addMethodSymbol("printi", typTab.voidType, params, true);
-			sym.addMethodSymbol("itos", typTab.stringType, params, true);
-			sym.addMethodSymbol("random", typTab.intType, params, true);
-			sym.addMethodSymbol("exit", typTab.voidType, params, true);
+			sym.addMethodSymbol("printi", typTab.voidType, params, true,-1);
+			sym.addMethodSymbol("itos", typTab.stringType, params, true,-1);
+			sym.addMethodSymbol("random", typTab.intType, params, true,-1);
+			sym.addMethodSymbol("exit", typTab.voidType, params, true,-1);
 			
 			// (boolean) param
 			params.clear();
 			params.add(new ParamSymbol("b", typTab.booleanType));
-			sym.addMethodSymbol("printb", typTab.voidType, params, true);
+			sym.addMethodSymbol("printb", typTab.voidType, params, true,-1);
 			
 			// (int[]) param
 			params.clear();
 			params.add(new ParamSymbol("a", typTab.resolveType("int[]")));
-			sym.addMethodSymbol("atos", typTab.voidType, params, true);
+			sym.addMethodSymbol("atos", typTab.voidType, params, true,-1);
 		} catch (SemanticError se){		// should never fail
 			System.out.println("0: "+se);
 			System.exit(1);
@@ -182,37 +182,40 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 				System.exit(1);
 			}
 		}
-		
+		int classOffset = 0;
 		for (Class cl: program.classes){
 			ClassSymbol sym = null;
 			try{
 				//symTab.addEntry(new ParamSymbol("this", typTab.resolveType(cl.name)));
 				if (cl.superName != null) {
-					sym = new ClassSymbol(cl.name, cl.superName, typTab, symTab);
+					sym = new ClassSymbol(cl.name, cl.superName, typTab, symTab,classOffset);
 				} else { // no superclass
-					sym = new ClassSymbol(cl.name, symTab);
+					sym = new ClassSymbol(cl.name, symTab, classOffset);
 				}
 			} catch (SemanticError se){
 				System.out.println(""+cl.line + ": "+se);
 				System.exit(1);
 			}
 			
+			int fieldOffset = 0;
 			for (Field f: cl.fields){
 				try{
-					sym.addFieldSymbol(f.name, typTab.resolveType(f.type.getName()));
+					sym.addFieldSymbol(f.name, typTab.resolveType(f.type.getName()),fieldOffset);
 				} catch (SemanticError se){
 					System.out.println(""+f.line + ": "+se);
 					System.exit(1);
 				}
+				fieldOffset++;
 			}
 			
+			int methodOffset = 0;
 			for (Method m: cl.methods){
 				try{
 					List<ParamSymbol> params = new ArrayList<ParamSymbol>();
 					for (Formal f: m.formalList){
 						params.add(new ParamSymbol(f.name, typTab.resolveType(f.type.getName())));
 					}
-					sym.addMethodSymbol(m.name, typTab.resolveType(m.type.getName()), params, m.isStatic);
+					sym.addMethodSymbol(m.name, typTab.resolveType(m.type.getName()), params, m.isStatic, methodOffset);
 				} catch (SemanticError se){
 					System.out.println(""+m.line + ": "+se);
 					System.exit(1);
@@ -226,8 +229,10 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 					else
 						mainDefined = true;
 				}
+				methodOffset++;
 			}
 			symTab.addEntry(sym);
+			classOffset++;
 		}
 		
 		if (!mainDefined){
@@ -252,25 +257,29 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 			System.out.println(""+cl.line + ": "+se);
 			System.exit(1);
 		}
+		int methodOffset = 0;
 		for (Method m: cl.methods){
 			try{
 				List<ParamSymbol> params = new ArrayList<ParamSymbol>();
 				for (Formal f: m.formalList){
 					params.add(new ParamSymbol(f.name, typTab.resolveType(f.type.getName())));
 				}
-				symTab.addEntry(new MethodSymbol(m.name, typTab.resolveType(m.type.getName()), params, m.isStatic));
+				symTab.addEntry(new MethodSymbol(m.name, typTab.resolveType(m.type.getName()), params, m.isStatic,methodOffset));
 			} catch (SemanticError se){
 				System.out.println(""+m.line + ": "+se);
 				System.exit(1);
 			}
+			methodOffset++;
 		}
+		int fieldOffset = 0;
 		for (Field f: cl.fields){
 			try{
-				symTab.addEntry(new FieldSymbol(f.name, typTab.resolveType(f.type.getName())));
+				symTab.addEntry(new FieldSymbol(f.name, typTab.resolveType(f.type.getName()),fieldOffset));
 			} catch (SemanticError se){
 				System.out.println(""+f.line + ": "+se);
 				System.exit(1);
 			}
+			fieldOffset++;
 		}
 		
 		for (Method m: cl.methods){
