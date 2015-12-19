@@ -154,11 +154,10 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		}
 		methodCode+=methodHeadLine;
 		
+		// visit all statements and add their code to methodCode
 		for (Stmt s: method.statementList){
 			methodCode += s.accept(this,0).lirCode;
 		}
-		
-
 		
 		// as the specs says, if the method is void, we add "Return 9999"
 		if(!ismain && method.type.getName().equals("void")){
