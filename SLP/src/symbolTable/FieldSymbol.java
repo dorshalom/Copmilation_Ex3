@@ -5,7 +5,7 @@ import semanticTypes.*;
 // class field symbol for symbol table
 public class FieldSymbol extends VarSymbol {
 	
-	public FieldSymbol(String symName, SemanticType type){
-		super(symName, type);
+	public FieldSymbol(String symName, SemanticType type, int offset){
+		super(symName, type, offset);
 	}
 }

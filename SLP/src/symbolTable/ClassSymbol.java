@@ -10,7 +10,6 @@ import semanticTypes.*;
 	private SymbolTable symbolTable;
 	public final String superName; 
 	
-
 	// for classes without super
 	public ClassSymbol(String name, SymbolTable global)  throws SemanticError{
 		super(name, new SClassType(name));
@@ -21,6 +20,20 @@ import semanticTypes.*;
 	// for classes with super
 	public ClassSymbol(String name, String superName, TypeTable typeTable, SymbolTable global)  throws SemanticError{
 		super(name, new SClassType(name, superName, typeTable));
+		this.symbolTable = global;
+		this.superName = superName;
+	}
+
+	// for classes without super with offset
+	public ClassSymbol(String name, SymbolTable global,int offset)  throws SemanticError{
+		super(name, new SClassType(name), offset);
+		superName = null;
+		this.symbolTable = global;
+	}
+	
+	// for classes with super with offset
+	public ClassSymbol(String name, String superName, TypeTable typeTable, SymbolTable global,int offset)  throws SemanticError{
+		super(name, new SClassType(name, superName, typeTable), offset);
 		this.symbolTable = global;
 		this.superName = superName;
 	}
@@ -48,7 +61,7 @@ import semanticTypes.*;
 
 	// try to add a new member method. Fails if the name of the method is already used in current class,
 	// or new method overloads a super method. Method overriding is allowed.
-	public void addMethodSymbol(String name, SemanticType type, List<ParamSymbol> params, boolean isStatic) throws SemanticError{
+	public void addMethodSymbol(String name, SemanticType type, List<ParamSymbol> params, boolean isStatic,int offset) throws SemanticError{
 		StringBuilder sb = new StringBuilder();
 		
 		try{
@@ -63,14 +76,24 @@ import semanticTypes.*;
 					MethodSymbol superMS = getMethodSymbolRec(name);
 					// method defined in super -> check that both methods are virtual
 					if ((isStatic == false) && (superMS.isStatic == isStatic)){
-						methods.put(name, new MethodSymbol(name, type, params, isStatic)); 		
+						if (offset > -1){
+							methods.put(name, new MethodSymbol(name, type, params, isStatic, offset)); 		
+						}
+						else{
+							methods.put(name, new MethodSymbol(name, type, params, isStatic)); 		
+						}
 						return;
 					}
 					else
 						sb.append("method defined in super, overloading not allowed");
 				}catch(SemanticError e3){
 					// method is not previously defined
-					methods.put(name, new MethodSymbol(name, type, params, isStatic));
+					if (offset > -1){
+						methods.put(name, new MethodSymbol(name, type, params, isStatic, offset));
+					}
+					else{
+						methods.put(name, new MethodSymbol(name, type, params, isStatic));
+					}
 					return;
 				}
 			}
@@ -101,14 +124,14 @@ import semanticTypes.*;
 
 	// try to add a new member field. Fails if the name of the field is already used in current class,
 	// or in super classes.
-	public void addFieldSymbol(String name, SemanticType type) throws SemanticError{
+	public void addFieldSymbol(String name, SemanticType type, int o) throws SemanticError{
 		try{
 			getFieldSymbolRec(name);
 		} catch (SemanticError e){
 			try{
 				getMethodSymbolRec(name);
 			} catch (SemanticError e2){
-				this.fields.put(name,new FieldSymbol(name,type));
+				this.fields.put(name,new FieldSymbol(name,type,o));
 				return;
 			}
 		}
