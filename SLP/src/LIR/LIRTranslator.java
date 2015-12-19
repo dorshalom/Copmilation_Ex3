@@ -1,8 +1,12 @@
 package LIR;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import semanticTypes.TypeTable;
+import slp.ASTNode;
 import slp.ArrayLocation;
 import slp.AssignStmt;
 import slp.BinaryOpExpr;
@@ -24,6 +28,7 @@ import slp.Program;
 import slp.PropagatingVisitor;
 import slp.ReturnStmt;
 import slp.StaticCall;
+import slp.Stmt;
 import slp.StmtList;
 import slp.ThisExpr;
 import slp.Type;
@@ -32,6 +37,8 @@ import slp.VarLocation;
 import slp.VirtCall;
 import slp.WhileStmt;
 
+import symbolTable.SymbolTable;
+
 public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
 	
@@ -39,153 +46,246 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 	protected int strLiteralsNumber = 0;
 	// map each literal string to the format 'str[i]'
 	protected Map<String,String> strLiterals = new HashMap<String,String>();
+	// list of methods' lir code
+	protected List<String> methodsCodeList = new ArrayList<String>();
+	// main method's lir code
+	protected String mainMethodCode="";
+	// dispatch table lir code
+	protected List<String> classDispatchTableCode = new ArrayList<String>();
+	
+	private ASTNode root;
+	private SymbolTable symTab;
+	private TypeTable typTab;
+	
+	private String currentThisClass;
+
+	
+	public LIRTranslator(ASTNode root, SymbolTable symTab, TypeTable typTab){
+		this.root = root;
+		this.symTab = symTab;
+		this.typTab = typTab;
+		
+	}
+	
+
+	@Override
+	public LIRUpType visit(Program program, Integer d) {
+		// visit all classes in the program
+		for(Class cl: program.classes){
+			if (!cl.name.equals("Library")) //skip library class
+				cl.accept(this, 0);
+		}
+		
+		String lirCode = "";
+		
+		// insert string literals
+		lirCode += "# string literals #\n";
+		for (String str: this.strLiterals.keySet()){
+			lirCode += this.strLiterals.get(str)+": \""+str+"\"\n";
+		}
+		lirCode+= "\n # dispatch table #";
+		
+		// insert class dispatch table
+		for (String line: this.classDispatchTableCode){
+			lirCode += line+"\n";
+		}
+		
+		lirCode+= "\n";
+		
+		
+		// insert all methods (except main)
+		for (String method: this.methodsCodeList){
+			lirCode += method+"\n";
+		}
+		
+		lirCode+= "\n";
+		
+		// insert main method
+		lirCode += this.mainMethodCode;
+		
+		
+		return new LIRUpType(lirCode, LIRAstNodeType.EXPLICIT,"");
+	}
+
+	@Override
+	public LIRUpType visit(Class cl, Integer d) {
+		
+		currentThisClass = cl.name; //update current class
+		
+		//visit all methods 
+		for(Method m: cl.methods){
+			m.accept(this,0);
+
+		}
+
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+	}
+
+	@Override
+	public LIRUpType visit(Field field, Integer d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public LIRUpType visit(Formal formal, Integer d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public LIRUpType visit(Type type, Integer d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public LIRUpType visit(Method method, Integer d) {
+		boolean ismain = isMain(method); 
+		String methodCode = "";
+		
+		// get method headline
+		String methodHeadLine="";
+		if(ismain){
+			methodHeadLine+="_ic_main:\n";
+		}
+		else{
+			methodHeadLine+="_"+currentThisClass+"_"+method.name+":\n";
+		}
+		methodCode+=methodHeadLine;
+		
+		for (Stmt s: method.statementList){
+			methodCode += s.accept(this,0).lirCode;
+		}
+		
+
+		
+		// as the specs says, if the method is void, we add "Return 9999"
+		if(!ismain && method.type.getName().equals("void")){
+			methodCode += "Return 9999\n";
+		}
+		
+		// update methodsCode list / main method
+		if (ismain){
+			mainMethodCode = methodCode;
+		} else {
+			methodsCodeList.add(methodCode);
+		}
+		
+		//empty return... (because we already updated the methodsCodeList.. no need to return code..)
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+	}
+
+	@Override
+	public LIRUpType visit(AssignStmt assignStmt, Integer d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public LIRUpType visit(ReturnStmt retStmt, Integer d) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 	@Override
-	public LIRUpType visit(UnaryOpExpr expr, Integer d) {
+	public LIRUpType visit(UnaryOpExpr unaryOp, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(BinaryOpExpr expr, Integer d) {
+	public LIRUpType visit(BinaryOpExpr binaryOp, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(Program expr, Integer d) {
+	public LIRUpType visit(StaticCall staticCall, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(Class expr, Integer d) {
+	public LIRUpType visit(VirtCall virtCall, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(Field expr, Integer d) {
+	public LIRUpType visit(VarLocation varLoc, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(Formal expr, Integer d) {
+	public LIRUpType visit(ArrayLocation ArrLoc, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(Type expr, Integer d) {
+	public LIRUpType visit(CallStmt callStmt, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(Method expr, Integer d) {
+	public LIRUpType visit(StmtList stmtList, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(AssignStmt stmt, Integer d) {
+	public LIRUpType visit(IfStmt ifStmt, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(ReturnStmt stmt, Integer d) {
+	public LIRUpType visit(WhileStmt whileStmt, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(StaticCall expr, Integer d) {
+	public LIRUpType visit(BreakStmt breakStmt, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(VirtCall expr, Integer d) {
+	public LIRUpType visit(ContinueStmt contStmt, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(VarLocation expr, Integer d) {
+	public LIRUpType visit(LocalVarStmt localVarStmt, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(ArrayLocation expr, Integer d) {
+	public LIRUpType visit(ThisExpr thisExp, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(CallStmt stmt, Integer d) {
+	public LIRUpType visit(NewClassExpr newClassExp, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(StmtList stmt, Integer d) {
+	public LIRUpType visit(NewArrayExpr newArrExp, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LIRUpType visit(IfStmt stmt, Integer d) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public LIRUpType visit(WhileStmt stmt, Integer d) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public LIRUpType visit(BreakStmt stmt, Integer d) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public LIRUpType visit(ContinueStmt stmt, Integer d) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public LIRUpType visit(LocalVarStmt stmt, Integer d) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public LIRUpType visit(ThisExpr expr, Integer d) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public LIRUpType visit(NewClassExpr expr, Integer d) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public LIRUpType visit(NewArrayExpr expr, Integer d) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public LIRUpType visit(LengthExpr expr, Integer d) {
+	public LIRUpType visit(LengthExpr lengthExpr, Integer d) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -213,6 +313,18 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 			strLiteral = "1";
 		}		
 		return new LIRUpType("", LIRAstNodeType.LITERAL,strLiteral);
+	}
+	
+	private boolean isMain(Method m){
+		if (m.isStatic)  
+			if (m.type.getName().equals("void")) 
+				if (m.name.equals("main")) 
+					if(m.formalList.size() == 1)
+						if(m.formalList.get(0).name.equals("args"))
+							if(m.formalList.get(0).type.getName().equals("string[]")) 
+								return true;
+
+		return false;
 	}
 	
 
