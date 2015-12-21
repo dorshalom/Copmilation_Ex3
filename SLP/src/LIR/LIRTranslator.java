@@ -13,6 +13,7 @@ import slp.BinaryOpExpr;
 import slp.BreakStmt;
 import slp.CallStmt;
 import slp.Class;
+import slp.ClassType;
 import slp.ContinueStmt;
 import slp.Field;
 import slp.Formal;
@@ -36,7 +37,6 @@ import slp.UnaryOpExpr;
 import slp.VarLocation;
 import slp.VirtCall;
 import slp.WhileStmt;
-
 import symbolTable.SymbolTable;
 
 public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
@@ -51,7 +51,9 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 	// main method's lir code
 	protected String mainMethodCode="";
 	// dispatch table lir code
-	protected List<String> classDispatchTableCode = new ArrayList<String>();
+	protected List<String> classDispatchTableCodeList = new ArrayList<String>();
+	// dispatch table map - maps class names to a list of <method, belongsToClassName>
+	protected Map<String, HashMap<String,String>> dispatchTableMap = new HashMap<String,HashMap<String,String>>();
 	
 	private ASTNode root;
 	private SymbolTable symTab;
@@ -83,10 +85,13 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		for (String str: this.strLiterals.keySet()){
 			lirCode += this.strLiterals.get(str)+": \""+str+"\"\n";
 		}
-		lirCode+= "\n # dispatch table #";
+		lirCode+= "\n # dispatch table #\n";
 		
-		// insert class dispatch table
-		for (String line: this.classDispatchTableCode){
+		
+		
+		// insert dispatch table
+		buildDispatchTableCode();
+		for (String line: this.classDispatchTableCodeList){
 			lirCode += line+"\n";
 		}
 		
@@ -107,16 +112,35 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		return new LIRUpType(lirCode, LIRAstNodeType.EXPLICIT,"");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public LIRUpType visit(Class cl, Integer d) {
 		
 		currentThisClass = cl.name; //update current class
 		
-		//visit all methods 
+		
+		// fill dispatch table:
+		if(cl.superName == null){ // has no super
+			dispatchTableMap.put(cl.name, new HashMap<String,String>());
+		}
+		else{ // has super - clone methods list from super class
+			dispatchTableMap.put(cl.name, (HashMap<String, String>) dispatchTableMap.get(cl.superName).clone());
+		}
+		
+		
 		for(Method m: cl.methods){
+			// insert new methods into dispatch table map (if not static)
+			if(!m.isStatic){
+				// if method already exists because of super class, than it will be overridden
+				dispatchTableMap.get(cl.name).put(m.name, cl.name);
+			}
+			
+			//visit all methods
 			m.accept(this,0);
 
 		}
+		
+		
 
 		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
@@ -178,115 +202,115 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 	@Override
 	public LIRUpType visit(AssignStmt assignStmt, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(ReturnStmt retStmt, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 	
 	@Override
 	public LIRUpType visit(UnaryOpExpr unaryOp, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(BinaryOpExpr binaryOp, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(StaticCall staticCall, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(VirtCall virtCall, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(VarLocation varLoc, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(ArrayLocation ArrLoc, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(CallStmt callStmt, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(StmtList stmtList, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(IfStmt ifStmt, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(WhileStmt whileStmt, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(BreakStmt breakStmt, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(ContinueStmt contStmt, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(LocalVarStmt localVarStmt, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(ThisExpr thisExp, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(NewClassExpr newClassExp, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(NewArrayExpr newArrExp, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(LengthExpr lengthExpr, Integer d) {
 		// TODO Auto-generated method stub
-		return null;
+		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
@@ -324,6 +348,20 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 								return true;
 
 		return false;
+	}
+	
+	private void buildDispatchTableCode(){
+		
+		for (Map.Entry<String, HashMap<String,String>> ce: dispatchTableMap.entrySet()){ //go through each class entry		
+			String str="";
+			str+= "_DV_"+ ce.getKey() +": [";
+			for (Map.Entry<String, String> me: ce.getValue().entrySet()){ // go through each method entry
+				str+="_"+me.getValue()+"_"+me.getKey()+",";
+			}
+			str = str.substring(0, str.length()-1); //chop the last ','
+			str+="]";
+			classDispatchTableCodeList.add(str);
+		}
 	}
 	
 

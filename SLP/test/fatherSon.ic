@@ -1,0 +1,16 @@
+class Grandfather{
+	void run(){}
+	void walk(){}
+	void swim(){}
+}
+
+class Father extends Grandfather{
+	void run(){}
+	void walk(){}
+
+}
+
+class Son extends Father{
+	void walk(){}
+	static void main(string[] args) { }
+}

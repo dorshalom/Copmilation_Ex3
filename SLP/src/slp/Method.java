@@ -8,6 +8,7 @@ public class Method extends ASTNode {
 	public final String name;
 	public final List<Formal> formalList;
 	public final List<Stmt> statementList;
+	public String belongsToClass;
 
 	public Method(int line, boolean isStatic, Type type, String name, List<Formal> formals, List<Stmt> statements) {
 		super(line);
@@ -16,6 +17,7 @@ public class Method extends ASTNode {
 		this.name = name;
 		this.formalList = formals;
 		this.statementList = statements;
+		this.belongsToClass = null;
 	}
 	
 	/** Accepts a visitor object as part of the visitor pattern.

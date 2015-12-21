@@ -259,6 +259,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 		}
 		int methodOffset = 0;
 		for (Method m: cl.methods){
+			m.belongsToClass = cl.name;
 			try{
 				List<ParamSymbol> params = new ArrayList<ParamSymbol>();
 				for (Formal f: m.formalList){
