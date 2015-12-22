@@ -37,6 +37,8 @@ import slp.UnaryOpExpr;
 import slp.VarLocation;
 import slp.VirtCall;
 import slp.WhileStmt;
+import src.IC.LIR.LIRFlagEnum;
+import src.IC.LIR.LIRUpType;
 import symbolTable.SymbolTable;
 
 public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
@@ -120,7 +122,7 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		
 		
 		// fill dispatch table:
-		if(cl.superName == null){ // has no super
+		if(cl.superName == null){ // has no super 
 			dispatchTableMap.put(cl.name, new HashMap<String,String>());
 		}
 		else{ // has super - clone methods list from super class
@@ -201,8 +203,23 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
 	@Override
 	public LIRUpType visit(AssignStmt assignStmt, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		String str = "";
+		// translate rhs
+		LIRUpType rhs = assignStmt.rhs.accept(this, d);
+		str += rhs.lirCode;
+		str += getMoveType(rhs.astNodeType);
+		str += rhs.register+",";
+		str += "R"+d+"\n";
+		
+		// translate lhs
+		LIRUpType lhs = assignStmt.lhs.accept(this, d);
+		str+= lhs.lirCode;
+		
+		// handle all variable cases
+		str += getMoveType(lhs.astNodeType);
+		str += "R"+d+","+lhs.astNodeType+"\n";
+		
+		return new LIRUpType(str, LIRAstNodeType.STATEMENT,"");
 	}
 
 	@Override
@@ -361,6 +378,19 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 			str = str.substring(0, str.length()-1); //chop the last ','
 			str+="]";
 			classDispatchTableCodeList.add(str);
+		}
+	}
+	
+	private String getMoveType(LIRAstNodeType type){
+		switch(type) {
+		case ARRAYLOC: return "MoveArray ";
+		case LOCALVARLOC: return "Move ";
+		case EXTERNALVARLOC: return "MoveField ";
+		case REGISTER: return "Move ";
+		case LITERAL: return "Move ";
+		default:
+			System.err.println("Unhandled LIR instruction type");
+			return null;
 		}
 	}
 	
