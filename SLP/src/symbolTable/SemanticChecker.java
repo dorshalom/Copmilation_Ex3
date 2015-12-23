@@ -196,7 +196,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 				System.out.println(""+cl.line + ": "+se);
 				System.exit(1);
 			}
-			
+			// TODO: change offsets to support inheritance
 			int fieldOffset = 0;
 			for (Field f: cl.fields){
 				try{
@@ -272,6 +272,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 			}
 			methodOffset++;
 		}
+		// TODO: change offsets to support inheritance
 		int fieldOffset = 0;
 		for (Field f: cl.fields){
 			try{

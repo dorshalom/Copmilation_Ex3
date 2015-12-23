@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public class SymbolTable {
 	private Map<String, List<SymbolEntry>> symbolMap = new HashMap<String, List<SymbolEntry>>();
 	private List<List<SymbolEntry>> scope = new ArrayList<List<SymbolEntry>>();
-	private int scopeLevel = 0;
+	public int scopeLevel = 0;
 	
 	// binds scope level to a symbol
 	private class SymbolEntry{
@@ -73,4 +73,57 @@ public class SymbolTable {
 			return null;
 		return l.get(0).symbol;
 	}
+	
+	// returns the scope level of the last definition of <name>
+	public int findScopeLevel(String name){
+		List<SymbolEntry> l = symbolMap.get(name);
+		if(l == null)
+			return -1;
+		return l.get(0).level;
+	}
 }
+
+/*---------------------------------------------------------------IN SEMANTIC CHECKER----------------------------------------------------------------------------
+* 
+*
+*	scopeLevel 1 (always exists)				    scopeLevel 2 (THIS class scope)		     	  scopeLevel 3 (Method scope)	 scopeLevel 4...N (Block scopes)
+*---------------------------------------------------------------------------------------------------------------------------------------------------------------
+*	Class A { Field_A ... Field_Z;				    CurrentClass_Field_A						  CurrentMethod_Param_A			 CurrentBlock_LocalVar_A
+*			  Method A(Param_A...Param_Z)		    ...											  ...							 ...
+*			  ...								    CurrentClass_Field_Z						  CurrentMethod_Param_Z		     CurrentBlock_LocalVar_Z
+*			  Method Z(Param_A...Param_Z)		
+*	}												CurrentClass_Method_A(Param_A...Param_Z)	  CurrentMethod_LocalVar_A
+*													...											  ...
+*	...												CurrentClass_Method_Z(Param_A...Param_Z)	  CurrentMethod_LocalVar_Z
+*
+*	Class Z { Field_A ... Field_Z;
+*			  Method A(Param_A...Param_Z)
+*			  ...
+*			  Method Z(Param_A...Param_Z)
+*	}
+*
+*	Class Library{library function definitions}
+*
+*/
+
+/*---------------------------------------------------------------IN LIRTRANSLATOR----------------------------------------------------------------------------
+* 
+*
+*	scopeLevel 1 (always exists)				    scopeLevel 2 (THIS class scope)		     	  scopeLevel 3 (Method scope)	 scopeLevel 4...N (Block scopes)
+*---------------------------------------------------------------------------------------------------------------------------------------------------------------
+*	Class A { Field_A ... Field_Z;				    CurrentClass_Field_A						  CurrentMethod_Param_A			 CurrentBlock_LocalVar_A
+*			  Method A(Param_A...Param_Z)		    ...											  ...							 ...
+*			  ...								    CurrentClass_Field_Z						  CurrentMethod_Param_Z		     CurrentBlock_LocalVar_Z
+*			  Method Z(Param_A...Param_Z)		
+*	}													  										  CurrentMethod_LocalVar_A
+*																								  ...
+*	...													  										  CurrentMethod_LocalVar_Z
+*
+*	Class Z { Field_A ... Field_Z;
+*			  Method A(Param_A...Param_Z)
+*			  ...
+*			  Method Z(Param_A...Param_Z)
+*	}
+*
+*	Class Library{library function definitions}
+*/

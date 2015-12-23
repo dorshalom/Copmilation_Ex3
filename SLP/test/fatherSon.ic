@@ -11,6 +11,15 @@ class Father extends Grandfather{
 }
 
 class Son extends Father{
-	void walk(){}
-	static void main(string[] args) { }
+	int j;
+	void walk(int l){
+		//this.j = 0;
+		int k;
+		k = this.j;
+		{
+			int j = 9;
+			k = j;
+		}
+	}
+	static void main(string[] args) {}
 }
