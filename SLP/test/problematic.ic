@@ -1,0 +1,12 @@
+class C{
+	int j;
+	void walk(int j){
+		j = 0;
+		int k;
+		{
+			int j = 9;
+			k = j;
+		}
+	}
+	static void main(string[] args) {}
+}

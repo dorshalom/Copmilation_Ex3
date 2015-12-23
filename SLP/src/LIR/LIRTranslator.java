@@ -5,41 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import semanticTypes.TypeTable;
-import slp.ASTNode;
-import slp.ArrayLocation;
-import slp.AssignStmt;
-import slp.BinaryOpExpr;
-import slp.BreakStmt;
-import slp.CallStmt;
+import slp.*;
 import slp.Class;
-import slp.ClassType;
-import slp.ContinueStmt;
-import slp.Field;
-import slp.Formal;
-import slp.IfStmt;
-import slp.LengthExpr;
-import slp.LiteralExpr;
-import slp.LiteralsEnum;
-import slp.LocalVarStmt;
-import slp.Method;
-import slp.NewArrayExpr;
-import slp.NewClassExpr;
-import slp.Program;
-import slp.PropagatingVisitor;
-import slp.ReturnStmt;
-import slp.StaticCall;
-import slp.Stmt;
-import slp.StmtList;
-import slp.ThisExpr;
-import slp.Type;
-import slp.UnaryOpExpr;
-import slp.VarLocation;
-import slp.VirtCall;
-import slp.WhileStmt;
-import src.IC.LIR.LIRFlagEnum;
-import src.IC.LIR.LIRUpType;
-import symbolTable.SymbolTable;
+import semanticTypes.*;
+import symbolTable.*;
+
 
 public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
@@ -76,8 +46,12 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 	public LIRUpType visit(Program program, Integer d) {
 		// visit all classes in the program
 		for(Class cl: program.classes){
-			if (!cl.name.equals("Library")) //skip library class
+			// TODO: this check is redundant. we won't have a "Library" class in our program ever.
+			if (!cl.name.equals("Library")){ //skip library class
+				symTab.enterScope();
 				cl.accept(this, 0);
+				symTab.exitScope();
+			}
 		}
 		
 		String lirCode = "";
@@ -129,6 +103,15 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 			dispatchTableMap.put(cl.name, (HashMap<String, String>) dispatchTableMap.get(cl.superName).clone());
 		}
 		
+		// TODO: change offsets to support inheritance
+		int fieldOffset = 0;
+		for (Field f: cl.fields){
+			try{
+				symTab.addEntry(new FieldSymbol(f.name, typTab.resolveType(f.type.getName()),fieldOffset));
+			} catch (SemanticError se){}
+			fieldOffset++;
+		}
+		
 		
 		for(Method m: cl.methods){
 			// insert new methods into dispatch table map (if not static)
@@ -138,7 +121,9 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 			}
 			
 			//visit all methods
+			symTab.enterScope();
 			m.accept(this,0);
+			symTab.exitScope();
 
 		}
 		
@@ -212,12 +197,12 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		str += "R"+d+"\n";
 		
 		// translate lhs
-		LIRUpType lhs = assignStmt.lhs.accept(this, d);
+		LIRUpType lhs = assignStmt.lhs.accept(this, d+1);
 		str+= lhs.lirCode;
 		
 		// handle all variable cases
 		str += getMoveType(lhs.astNodeType);
-		str += "R"+d+","+lhs.astNodeType+"\n";
+		str += "R"+d+","+lhs.register+"\n";
 		
 		return new LIRUpType(str, LIRAstNodeType.STATEMENT,"");
 	}
@@ -254,8 +239,55 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
 	@Override
 	public LIRUpType visit(VarLocation varLoc, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		String str = "";
+		
+		// location.ID
+		if (varLoc.location != null){
+			// translate the location
+			LIRUpType loc = varLoc.location.accept(this, d);
+			// add code to translation
+			str += loc.lirCode;
+			
+			// get the type of the location
+			SemanticType locationType = (SemanticType) varLoc.location.accept(new ExprTypeResolver(symTab, typTab, currentThisClass), null);
+			
+			// get the field offset
+			ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(locationType.name);	
+			FieldSymbol fs = null;
+			try{	// will always succeed
+				fs = cs.getFieldSymbolRec(varLoc.name);
+			}catch (SemanticError se){}			 
+			int fieldOffset = fs.getOffset();
+			
+			// translate this step
+			str += getMoveType(loc.astNodeType);
+			String locReg = "R"+d;
+			str += loc.register+","+locReg+"\n";
+			
+			// check external location null reference
+			str += "StaticCall __checkNullRef(a=R"+d+"),Rdummy\n";
+			
+			return new LIRUpType(str, LIRAstNodeType.EXTERNALVARLOC, locReg+"."+fieldOffset);
+		// ID
+		}else{
+			int scopeLevel = symTab.findScopeLevel(varLoc.name);
+			if (scopeLevel == 2){	// it is a field of THIS
+				ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(currentThisClass);
+				FieldSymbol fs = null;
+				try{
+					fs = cs.getFieldSymbolRec(varLoc.name);
+				}catch(SemanticError se){}
+				int fieldOffset = fs.getOffset();
+				
+				str += "Move this, R"+d+"\n";
+				String tgtLoc = "R"+d+"."+fieldOffset;
+				
+				return new LIRUpType(str, LIRAstNodeType.EXTERNALVARLOC, tgtLoc);
+			}else{
+				// it's not a field, so it must be local variable
+				return new LIRUpType("",LIRAstNodeType.LOCALVARLOC, varLoc.name + scopeLevel);
+			}
+		}
 	}
 
 	@Override
@@ -272,19 +304,37 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
 	@Override
 	public LIRUpType visit(StmtList stmtList, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		String str = "";
+		
+		symTab.enterScope();
+		for (Stmt s: stmtList.statements)
+			str += s.accept(this, d).lirCode;
+		
+		symTab.exitScope();
+		return new LIRUpType(str, LIRAstNodeType.STATEMENT,"");
 	}
 
 	@Override
 	public LIRUpType visit(IfStmt ifStmt, Integer d) {
 		// TODO Auto-generated method stub
+		symTab.enterScope();
+		ifStmt.thenStmt.accept(this, null);
+		symTab.exitScope();
+		
+		if (ifStmt.elseStmt != null){
+			symTab.enterScope();
+			ifStmt.elseStmt.accept(this, null);
+			symTab.exitScope();
+		}
 		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
 	@Override
 	public LIRUpType visit(WhileStmt whileStmt, Integer d) {
 		// TODO Auto-generated method stub
+		symTab.enterScope();
+		whileStmt.thenStmt.accept(this, null);
+		symTab.exitScope();
 		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
@@ -302,14 +352,28 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
 	@Override
 	public LIRUpType visit(LocalVarStmt localVarStmt, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		try{
+			symTab.addEntry(new VarSymbol(localVarStmt.name, typTab.resolveType(localVarStmt.type.getName())));
+		}catch(SemanticError se) {}
+		
+		String str = "";
+		
+		if (localVarStmt.init != null){
+			LIRUpType initVal = localVarStmt.init.accept(this, d);
+			str += initVal.lirCode;
+			str += getMoveType(initVal.astNodeType);
+			str += initVal.register+",R"+d+"\n";
+			// move register into the local var name
+			str += "Move R"+d+","+localVarStmt.name+symTab.scopeLevel+"\n";
+		}
+		
+		return new LIRUpType(str, LIRAstNodeType.STATEMENT,"");
 	}
 
 	@Override
 	public LIRUpType visit(ThisExpr thisExp, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		String str = "Move this, R"+d+"\n";
+		return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);
 	}
 
 	@Override
@@ -335,6 +399,8 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		String strLiteral = "";
 		LiteralsEnum type = expr.type;
 		if (type == LiteralsEnum.QUOTE){
+			//TODO: 1. We don't have escape characters inside quotes (see slp.lex).
+			//      2. Why \\\\n and not \\n ?
 			String strVal = ((String) expr.value).replaceAll("\n", "\\\\n");
 			if (!strLiterals.containsKey(strVal))
 				strLiterals.put(strVal, "str"+(strLiteralsNumber++));
@@ -383,17 +449,14 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 	
 	private String getMoveType(LIRAstNodeType type){
 		switch(type) {
-		case ARRAYLOC: return "MoveArray ";
-		case LOCALVARLOC: return "Move ";
+		case LITERAL: 
+		case REGISTER: 
+		case LOCALVARLOC: 	 return "Move ";
+		case ARRAYLOC: 		 return "MoveArray ";
 		case EXTERNALVARLOC: return "MoveField ";
-		case REGISTER: return "Move ";
-		case LITERAL: return "Move ";
 		default:
-			System.err.println("Unhandled LIR instruction type");
+			System.out.println("Unhandled LIR instruction type");
 			return null;
 		}
 	}
-	
-
-
 }
