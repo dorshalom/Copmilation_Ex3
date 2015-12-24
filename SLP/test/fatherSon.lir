@@ -1,0 +1,110 @@
+# string literals #
+str1: ""
+str2: "outer j[0] = "
+str5: "bla"
+str3: "outer j[j[1]] = "
+str0: "inner j = "
+str4: "outer j.length = "
+str6: "son.j = "
+
+ # dispatch table #
+_DV_Grandfather: [_Grandfather_run,_Grandfather_walk,_Grandfather_swim]
+_DV_Son: [_Father_run,_Son_walk,_Grandfather_swim]
+_DV_Father: [_Father_run,_Father_walk,_Grandfather_swim]
+
+_Grandfather_run:
+Return 9999
+
+_Grandfather_walk:
+Return 9999
+
+_Grandfather_swim:
+Return 9999
+
+_Father_run:
+Return 9999
+
+_Father_walk:
+Return 9999
+
+_Son_walk:
+Return 9999
+
+
+_ic_main:
+Move 7, R0
+Mul 4, R0
+Library __allocateArray(R0), R0
+Move R0,R0
+Move R0,j3
+Move 2,R0
+Move j3, R1
+Move 1, R2
+MoveArray R0,R1[R2]
+Move 5,R0
+Move j3, R1
+Move 2, R2
+MoveArray R0,R1[R2]
+Move 9,R0
+Move R0,j4
+# argument #0:
+Move str0, R0
+Library __print(R0), R0
+# argument #0:
+Move j4, R0
+Library __printi(R0), R0
+# argument #0:
+Move str1, R0
+Library __println(R0), R0
+# argument #0:
+Move str2, R0
+Library __print(R0), R0
+# argument #0:
+Move j3, R0
+Move 0, R1
+MoveArray R0[R1], R0
+Library __printi(R0), R0
+# argument #0:
+Move str1, R0
+Library __println(R0), R0
+# argument #0:
+Move str3, R0
+Library __print(R0), R0
+# argument #0:
+Move j3, R0
+Move j3, R1
+Move 1, R2
+MoveArray R1[R2], R1
+MoveArray R0[R1], R0
+Library __printi(R0), R0
+# argument #0:
+Move str1, R0
+Library __println(R0), R0
+# argument #0:
+Move str4, R0
+Library __print(R0), R0
+# argument #0:
+Move j3, R0
+ArrayLength R0, R0
+Move R0, R0
+Library __printi(R0), R0
+# argument #0:
+Move str1, R0
+Library __println(R0), R0
+Library __allocateObject(8), R0
+MoveField _DV_Son, R0.0
+Move R0,R0
+Move R0,son3
+Move str5,R0
+Move son3,R1
+MoveField R0,R1.0
+# argument #0:
+Move str6, R0
+Library __print(R0), R0
+# argument #0:
+Move son3,R0
+MoveField R0.0, R0
+Library __print(R0), R0
+# argument #0:
+Move str1, R0
+Library __println(R0), R0

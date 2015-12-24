@@ -137,4 +137,10 @@ import semanticTypes.*;
 		}
 		throw  new SemanticError("field name already in use", name);
 	}
+	
+	public int bytesInMemory(){
+		//TODO: this is a stub
+		//TODO: return number of bytes this class needs for allocation
+		return 8;
+	}
 }

@@ -11,15 +11,33 @@ class Father extends Grandfather{
 }
 
 class Son extends Father{
-	int j;
-	void walk(int l){
-		//this.j = 0;
-		int k;
-		k = this.j;
+	string j;
+	void walk(int l){}
+	static void main(string[] args) {	
+		int[] j = new int[7];
+		j[1] = 2;
+		j[2] = 5;
 		{
 			int j = 9;
-			k = j;
+			Library.print("inner j = ");
+			Library.printi(j);
+			Library.println("");
 		}
+		Library.print("outer j[0] = ");
+		Library.printi(j[0]);
+		Library.println("");
+		Library.print("outer j[j[1]] = ");
+		Library.printi(j[j[1]]);
+		Library.println("");
+		Library.print("outer j.length = ");
+		Library.printi(j.length);
+		Library.println("");
+
+		Son son = new Son();
+		son.j = "bla";
+
+		Library.print("son.j = ");
+		Library.print(son.j);
+		Library.println("");
 	}
-	static void main(string[] args) {}
 }

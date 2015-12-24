@@ -2,13 +2,11 @@ package slp;
 
 import java.io.*;
 
+import semanticTypes.*;
+import symbolTable.*;
+//import java_cup.runtime.*;
+import java_cup.runtime.Symbol;
 import LIR.LIRTranslator;
-import semanticTypes.TypeTable;
-import symbolTable.SemanticChecker;
-import symbolTable.SymbolTable;
-import java_cup.runtime.*;
-
-// just checking how commit works
 
 public class Main {
 	/** Reads an IC and pretty-prints it.
@@ -36,7 +34,7 @@ public class Main {
 			
 			SymbolTable symTab = new SymbolTable();
 			TypeTable typTab = new TypeTable();
-			
+			  
 			
 			SemanticChecker checker = new SemanticChecker(root, symTab, typTab);
 			checker.start();

@@ -234,7 +234,6 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		int reg = d;
 		for (Expr arg: staticCall.args){
 			LIRUpType argExp = arg.accept(this, reg);
-			str += "# argument #"+(reg-d)+":\n";
 			str += argExp.lirCode;
 			str += getMoveType(argExp.astNodeType);
 			str += argExp.register+", R"+reg+"\n";
@@ -319,9 +318,28 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 	}
 
 	@Override
-	public LIRUpType visit(ArrayLocation ArrLoc, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+	public LIRUpType visit(ArrayLocation arrLoc, Integer d) {
+		String str = "";
+		
+		// visit array
+		LIRUpType array = arrLoc.array.accept(this, d);
+		str += array.lirCode;
+		str += getMoveType(array.astNodeType);
+		str += array.register+", R"+d+"\n";
+		
+		// check array null reference
+		//TODO: str += "StaticCall __checkNullRef(a=R"+d+"), Rdummy\n";
+		
+		// visit index
+		LIRUpType index = arrLoc.index.accept(this, d+1);
+		str += index.lirCode;
+		str += getMoveType(index.astNodeType);
+		str += index.register+", R"+(d+1)+"\n";
+		
+		// check array access
+		//TODO: str += "StaticCall __checkArrayAccess(a=R"+d+",i=R"+(d+1)+"), Rdummy\n";
+		
+		return new LIRUpType(str, LIRAstNodeType.ARRAYLOC,"R"+d+"[R"+(d+1)+"]");
 	}
 
 	@Override
@@ -439,7 +457,7 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		str += array.register+", R"+d+"\n";
 		
 		// make sure context is non-null
-		str += "StaticCall __checkNullRef(a=R"+d+"), Rdummy\n";
+		//TODO: str += "StaticCall __checkNullRef(a=R"+d+"), Rdummy\n";
 		str += "ArrayLength R"+d+", R"+d+"\n";
 		
 		return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);
