@@ -227,7 +227,35 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
 	@Override
 	public LIRUpType visit(StaticCall staticCall, Integer d) {
-		// TODO Auto-generated method stub
+		// TODO: not finished. Only deals with Library calls
+		String str = "";
+		
+		// recursive calls to all arguments
+		int reg = d;
+		for (Expr arg: staticCall.args){
+			LIRUpType argExp = arg.accept(this, reg);
+			str += "# argument #"+(reg-d)+":\n";
+			str += argExp.lirCode;
+			str += getMoveType(argExp.astNodeType);
+			str += argExp.register+", R"+reg+"\n";
+			reg++;
+		}
+		
+		// Library method call
+		if (staticCall.className.equals("Library")){
+			str += "Library __"+staticCall.funcName+"(";
+			// iterate over values (registers)
+			for(int i = 0; i < staticCall.args.size(); i++){
+				str += "R"+(i+d)+", ";
+			}
+			// remove last comma
+			if (str.endsWith(", ")) str = str.substring(0, str.length()-2);
+			str += "), R"+d+"\n";
+			
+			return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);
+		}
+		
+		//TODO: other static methods
 		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
@@ -265,7 +293,7 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 			str += loc.register+","+locReg+"\n";
 			
 			// check external location null reference
-			str += "StaticCall __checkNullRef(a=R"+d+"),Rdummy\n";
+			//TODO: str += "StaticCall __checkNullRef(a=R"+d+"),Rdummy\n";
 			
 			return new LIRUpType(str, LIRAstNodeType.EXTERNALVARLOC, locReg+"."+fieldOffset);
 		// ID
@@ -298,8 +326,7 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
 	@Override
 	public LIRUpType visit(CallStmt callStmt, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		return callStmt.call.accept(this, d);
 	}
 
 	@Override
@@ -378,20 +405,44 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
 	@Override
 	public LIRUpType visit(NewClassExpr newClassExp, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(newClassExp.name);
+		String str = "Library __allocateObject("+cs.bytesInMemory()+"), R"+d+"\n";
+		str += "MoveField _DV_"+cs.name+", R"+d+".0\n";
+		
+		return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);
 	}
 
 	@Override
 	public LIRUpType visit(NewArrayExpr newArrExp, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		String str = "";
+		
+		LIRUpType size = newArrExp.index.accept(this, d);
+		str += size.lirCode;
+		str += getMoveType(size.astNodeType);
+		str += size.register+", R"+d+"\n";
+		str += "Mul 4, R"+d+"\n";
+		
+		// make sure index is non-negative
+		//TODO: str += "StaticCall __checkSize(n=R"+d+"), Rdummy\n";
+		str += "Library __allocateArray(R"+d+"), R"+d+"\n";
+		
+		return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);
 	}
 
 	@Override
 	public LIRUpType visit(LengthExpr lengthExpr, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		String str = "";
+
+		LIRUpType array = lengthExpr.context.accept(this, d);
+		str += array.lirCode;
+		str += getMoveType(array.astNodeType);
+		str += array.register+", R"+d+"\n";
+		
+		// make sure context is non-null
+		str += "StaticCall __checkNullRef(a=R"+d+"), Rdummy\n";
+		str += "ArrayLength R"+d+", R"+d+"\n";
+		
+		return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);
 	}
 
 	@Override
