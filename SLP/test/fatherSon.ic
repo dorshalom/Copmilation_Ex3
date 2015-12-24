@@ -10,34 +10,40 @@ class Father extends Grandfather{
 
 }
 
-class Son extends Father{
+class Son /*extends Father*/{
 	string j;
-	void walk(int l){}
-	static void main(string[] args) {	
-		int[] j = new int[7];
-		j[1] = 2;
-		j[2] = 5;
-		{
-			int j = 9;
-			Library.print("inner j = ");
-			Library.printi(j);
-			Library.println("");
-		}
-		Library.print("outer j[0] = ");
-		Library.printi(j[0]);
-		Library.println("");
-		Library.print("outer j[j[1]] = ");
-		Library.printi(j[j[1]]);
-		Library.println("");
-		Library.print("outer j.length = ");
-		Library.printi(j.length);
+	/*static int retInt(int l, int o){
+		Library.print("retInt.l = ");
+		Library.printi(l);
 		Library.println("");
 
-		Son son = new Son();
-		son.j = "bla";
+		return 777;
+	}*/
+	void walk(int l, boolean j, string p){
+		Library.print("walk_int_param = ");
+		Library.printi(l);
+		Library.println("");
+
+		Library.print("walk_bool_param = ");
+		Library.printb(j);
+		Library.println("");
+
+		Library.print("walk_string_param = ");
+		Library.print(p);
+		Library.println("");
 
 		Library.print("son.j = ");
-		Library.print(son.j);
+		Library.print(this.j);
 		Library.println("");
+	}
+
+	static void main(string[] args) {	
+		Son son = new Son();
+		son.j = "walking";
+
+		son.walk(999, true, "stringParamTest");
+		//int k = Son.retInt(999, 888);
+		//Library.print("returned: ");
+		//Library.printi(k);
 	}
 }

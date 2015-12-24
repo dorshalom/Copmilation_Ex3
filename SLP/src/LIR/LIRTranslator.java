@@ -193,7 +193,7 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		LIRUpType rhs = assignStmt.rhs.accept(this, d);
 		str += rhs.lirCode;
 		str += getMoveType(rhs.astNodeType);
-		str += rhs.register+",";
+		str += rhs.register+", ";
 		str += "R"+d+"\n";
 		
 		// translate lhs
@@ -202,15 +202,23 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		
 		// handle all variable cases
 		str += getMoveType(lhs.astNodeType);
-		str += "R"+d+","+lhs.register+"\n";
+		str += "R"+d+", "+lhs.register+"\n";
 		
 		return new LIRUpType(str, LIRAstNodeType.STATEMENT,"");
 	}
 
 	@Override
 	public LIRUpType visit(ReturnStmt retStmt, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		String str = "";
+		if (retStmt.expr != null){
+			LIRUpType returnVal = retStmt.expr.accept(this, d);
+			str += returnVal.lirCode;
+			str += "Return "+returnVal.register+"\n";
+		} else {
+			str += "Return 9999\n";
+		}
+		
+		return new LIRUpType(str, LIRAstNodeType.STATEMENT, "");
 	}
 	
 	@Override
@@ -245,23 +253,82 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 			str += "Library __"+staticCall.funcName+"(";
 			// iterate over values (registers)
 			for(int i = 0; i < staticCall.args.size(); i++){
-				str += "R"+(i+d)+", ";
+				str += "R"+(i+d);
+				if (i < staticCall.args.size()-1)
+					str += ", ";
 			}
-			// remove last comma
-			if (str.endsWith(", ")) str = str.substring(0, str.length()-2);
 			str += "), R"+d+"\n";
 			
 			return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);
 		}
 		
-		//TODO: other static methods
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		// other static methods
+		ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(staticCall.className);
+		MethodSymbol ms = null;
+		try {
+			ms = cs.getMethodSymbol(staticCall.funcName);
+		} catch (SemanticError se) {}
+
+		// construct method label
+		String methodName = "_"+cs.name+"_"+ms.name;
+		str += "StaticCall "+methodName+"(";
+		// insert <formal>=<argument register>
+		for(int i = 0; i < staticCall.args.size(); i++){
+			str += ms.params.get(i).name+"=R"+(d+i);
+			if (i < staticCall.args.size()-1)
+				str += ", ";
+		}
+		str += "), R"+d+"\n";
+		
+		return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);
 	}
 
 	@Override
 	public LIRUpType visit(VirtCall virtCall, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		String str = "";
+		String className;
+		
+		// recursive call to call location
+		if (virtCall.location != null){
+			className = ((SemanticType)virtCall.location.accept(new ExprTypeResolver(symTab, typTab, currentThisClass), null)).name;
+			LIRUpType location = virtCall.location.accept(this, d);
+			str += location.lirCode;
+			str += getMoveType(location.astNodeType);
+			str += location.register+", R"+d+"\n";
+			
+			// check location null reference
+			//TODO: str += "StaticCall __checkNullRef(a=R"+d+"),Rdummy\n";
+		} else {
+			className = currentThisClass;
+			str += "Move this, R"+d+"\n";
+		}
+		
+		int reg = d+1;
+		for (Expr arg: virtCall.args){
+			LIRUpType argExp = arg.accept(this, reg);
+			str += argExp.lirCode;
+			str += getMoveType(argExp.astNodeType);
+			str += argExp.register+", R"+reg+"\n";
+			reg++;
+		}
+
+		ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(className);
+		MethodSymbol ms = null;
+		try {
+			ms = cs.getMethodSymbolRec(virtCall.funcName);
+		} catch (SemanticError e) {}
+		int offset = ms.getOffset();
+		
+		str += "VirtualCall R"+d+"."+offset+"(";
+		// insert <formal>=<argument register>
+		for(int i = 0; i < virtCall.args.size(); i++){
+			str += ms.params.get(i).name+"=R"+(d+i+1);
+			if (i < virtCall.args.size()-1)
+				str += ", ";
+		}
+		str += "), R"+d+"\n";
+		
+		return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);	
 	}
 
 	@Override
@@ -289,10 +356,10 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 			// translate this step
 			str += getMoveType(loc.astNodeType);
 			String locReg = "R"+d;
-			str += loc.register+","+locReg+"\n";
+			str += loc.register+", "+locReg+"\n";
 			
 			// check external location null reference
-			//TODO: str += "StaticCall __checkNullRef(a=R"+d+"),Rdummy\n";
+			//TODO: str += "StaticCall __checkNullRef(a=R"+d+"), Rdummy\n";
 			
 			return new LIRUpType(str, LIRAstNodeType.EXTERNALVARLOC, locReg+"."+fieldOffset);
 		// ID
@@ -312,7 +379,9 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 				return new LIRUpType(str, LIRAstNodeType.EXTERNALVARLOC, tgtLoc);
 			}else{
 				// it's not a field, so it must be local variable
-				return new LIRUpType("",LIRAstNodeType.LOCALVARLOC, varLoc.name + scopeLevel);
+				// scopeLevel of -1 means this variable is not in symTable => it's a function parameter => leave it's name as is
+				String localVarName = (scopeLevel == -1 ? varLoc.name : varLoc.name + scopeLevel);
+				return new LIRUpType("",LIRAstNodeType.LOCALVARLOC, localVarName);
 			}
 		}
 	}
@@ -407,9 +476,8 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 			LIRUpType initVal = localVarStmt.init.accept(this, d);
 			str += initVal.lirCode;
 			str += getMoveType(initVal.astNodeType);
-			str += initVal.register+",R"+d+"\n";
-			// move register into the local var name
-			str += "Move R"+d+","+localVarStmt.name+symTab.scopeLevel+"\n";
+			str += initVal.register+", R"+d+"\n";
+			str += "Move R"+d+", "+localVarStmt.name+symTab.scopeLevel+"\n";
 		}
 		
 		return new LIRUpType(str, LIRAstNodeType.STATEMENT,"");

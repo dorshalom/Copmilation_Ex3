@@ -198,7 +198,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 			}
 			// TODO: change offsets to support inheritance
 			// TODO: field offsets must start with 1. 0 is virtual table
-			int fieldOffset = 0;
+			int fieldOffset = 1;
 			for (Field f: cl.fields){
 				try{
 					sym.addFieldSymbol(f.name, typTab.resolveType(f.type.getName()),fieldOffset);
