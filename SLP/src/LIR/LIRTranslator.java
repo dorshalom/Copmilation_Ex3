@@ -259,8 +259,103 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
 	@Override
 	public LIRUpType visit(BinaryOpExpr binaryOp, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		String trueLabel = "_true_label"+labelNumber;
+		String falseLabel = "_false_label"+labelNumber;
+		String endLabel = "_end_label"+(labelNumber++);
+		String str = "";
+		
+		// recursive call to leftOp
+		LIRUpType leftOp = binaryOp.leftOp.accept(this, d);
+		str += leftOp.lirCode;
+		str += getMoveType(leftOp.astNodeType);
+		str += leftOp.register+",R"+d+"\n";
+
+		LIRUpType rightOp = binaryOp.rightOp.accept(this, d+1);
+		str += rightOp.lirCode;
+		str += getMoveType(rightOp.astNodeType);
+		str += rightOp.register+",R"+(d+1)+"\n";
+
+		if (binaryOp.operator.type == "Logical"){
+			if (binaryOp.operator != BinaryOpsEnum.LAND && binaryOp.operator != BinaryOpsEnum.LOR){
+				str += "Compare R"+(d+1)+",R"+d+"\n";
+			}
+			switch (binaryOp.operator){
+			case EQUAL:
+				str += "JumpTrue "+trueLabel+"\n";
+				break;
+			case NEQUAL:
+				str += "JumpFalse "+trueLabel+"\n";
+				break;
+			case GT:
+				str += "JumpG "+trueLabel+"\n";
+				break;
+			case GTE:
+				str += "JumpGE "+trueLabel+"\n";
+				break;
+			case LT:
+				str += "JumpL "+trueLabel+"\n";
+				break;
+			case LTE:
+				str += "JumpLE "+trueLabel+"\n";
+				break;
+			case LAND:
+				str += "Compare 0,R"+d+"\n";
+				str += "JumpTrue "+falseLabel+"\n";
+				str += "Compare 0,R"+(d+1)+"\n";
+				str += "JumpTrue "+falseLabel+"\n";
+				str += "Jump "+trueLabel+"\n";
+				str += falseLabel+":\n"; 
+				break;
+			case LOR:
+				str += "Compare 0,R"+d+"\n";
+				str += "JumpFalse "+trueLabel+"\n";
+				str += "Compare 0,R"+(d+1)+"\n";
+				str += "JumpFalse "+trueLabel+"\n"; 
+				break;
+			default:
+				System.err.println("* Error in logical binaryOP *");	
+			}
+			str += "Move 0,R"+d+"\n";
+			str += "Jump "+endLabel+"\n";
+			str += trueLabel+":\n";
+			str += "Move 1,R"+d+"\n";
+			str += endLabel+":\n";
+
+			return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);
+		}
+		else{
+			switch (binaryOp.operator){
+			case PLUS:
+				// check if operation is on strings or on integers
+				SemanticType operandType = (SemanticType) binaryOp.rightOp.accept(new SemanticChecker(binaryOp,symTab,typTab), null);
+				if (operandType == typTab.intType){
+					str += "Add R"+(d+1)+",R"+d+"\n";
+				} else { // strings
+					str += "Library __stringCat(R"+d+",R"+(d+1)+"),R"+d+"\n";
+				}
+				break;
+			case MINUS:
+				str += "Sub R"+(d+1)+",R"+d+"\n";
+				break;
+			case MULTIPLY:
+				str += "Mul R"+(d+1)+",R"+d+"\n";
+				break;
+			case DIVIDE:
+				// check division by zero
+				str += "StaticCall __checkZero(b=R"+(d+1)+"),Rdummy\n";
+				
+				str += "Div R"+(d+1)+",R"+d+"\n";
+				break;
+			case MOD:
+				str += "Mod R"+(d+1)+",R"+d+"\n";
+				break;
+			default:
+				System.err.println("*** YOUR PARSER SUCKS ***");
+			}
+			
+			return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);
+		}
+
 	}
 
 	@Override
@@ -619,7 +714,7 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 			String strVal = ((String) expr.value);
 			if (!strLiterals.contains(strVal))
 				strLiterals.add(strVal);
-			strLiteral = "str"+strLiterals.indexOf(strVal);	
+			strLiteral = "str"+(strLiterals.indexOf(strVal)+1);	
 		}	
 		if (type == LiteralsEnum.INTEGER){
 			strLiteral = expr.value.toString();
