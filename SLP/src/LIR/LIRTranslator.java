@@ -14,6 +14,10 @@ import symbolTable.*;
 public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
 	
+	// identifier for current while loop
+	protected int currWhileIdentifier = -1;
+	// count the number of labels we have seen
+	protected int labelNumber = 0;
 	// count the number of string literals we have seen
 	protected int strLiteralsNumber = 0;
 	// map each literal string to the format 'str[i]'
@@ -49,7 +53,7 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 			// TODO: this check is redundant. we won't have a "Library" class in our program ever.
 			if (!cl.name.equals("Library")){ //skip library class
 				symTab.enterScope();
-				cl.accept(this, 0);
+				cl.accept(this, 1);
 				symTab.exitScope();
 			}
 		}
@@ -58,7 +62,7 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		
 		// insert string literals
 		lirCode += "# string literals #\n";
-		int i = 0;
+		int i = 1;
 		for (String str: this.strLiterals){
 			lirCode += "str"+i+": \""+str+"\"\n";
 			i++;
@@ -124,7 +128,7 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 			
 			//visit all methods
 			symTab.enterScope();
-			m.accept(this,0);
+			m.accept(this,1);
 			symTab.exitScope();
 
 		}
@@ -169,7 +173,7 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		
 		// visit all statements and add their code to methodCode
 		for (Stmt s: method.statementList){
-			methodCode += s.accept(this,0).lirCode;
+			methodCode += s.accept(this,1).lirCode;
 		}
 		
 		// as the specs says, if the method is void, we add "Return 9999"
@@ -225,8 +229,32 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 	
 	@Override
 	public LIRUpType visit(UnaryOpExpr unaryOp, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		String str = "";
+		String trueLabel = "_true_label"+labelNumber;
+		String endLabel = "_end_label"+(labelNumber++);
+		
+		LIRUpType rightOp = unaryOp.rightOp.accept(this, d);
+		str += rightOp.lirCode;
+		str += getMoveType(rightOp.astNodeType);
+		str += rightOp.register+",R"+d+"\n";
+		if (unaryOp.operator == UnaryOpsEnum.LNEG){//This is logical unary operation
+			// recursive call to rightOp
+
+			str += "Compare 0,R"+d+"\n";
+			str += "JumpTrue "+trueLabel+"\n";
+			str += "Move 0,R"+d+"\n";
+			str += "Jump "+endLabel+"\n";
+			str += trueLabel+":\n";
+			str += "Move 1,R"+d+"\n";
+			str += endLabel+":\n";
+
+			return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);
+		}
+		else{//This is math unary operation			
+			str += "Neg R"+d+"\n";
+			return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+d);
+			
+		}
 	}
 
 	@Override
@@ -431,33 +459,83 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 	}
 
 	@Override
-	public LIRUpType visit(IfStmt ifStmt, Integer d) {
-		// TODO Auto-generated method stub
-		symTab.enterScope();
-		ifStmt.thenStmt.accept(this, null);
-		symTab.exitScope();
+	public LIRUpType visit(IfStmt ifStatement, Integer d) {
+//		// TODO Auto-generated method stub
+//		symTab.enterScope();
+//		ifStmt.thenStmt.accept(this, null);
+//		symTab.exitScope();
+//		
+//		if (ifStmt.elseStmt != null){
+//			symTab.enterScope();
+//			ifStmt.elseStmt.accept(this, null);
+//			symTab.exitScope();
+//		}
+//		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		String tr = "";
+		String falseLabel = "_false_label"+labelNumber;
+		String endLabel = "_end_label"+(labelNumber++);
 		
-		if (ifStmt.elseStmt != null){
-			symTab.enterScope();
-			ifStmt.elseStmt.accept(this, null);
-			symTab.exitScope();
+		// recursive call the condition expression
+		LIRUpType condExp = ifStatement.condition.accept(this, d);
+		tr += condExp.lirCode;
+		tr += getMoveType(condExp.astNodeType);
+		tr += condExp.register+",R"+d+"\n";
+		// check condition
+		tr += "Compare 0,R"+d+"\n";
+		if (ifStatement.elseStmt!=null) tr += "JumpTrue "+falseLabel+"\n";
+		else tr += "JumpTrue "+endLabel+"\n";
+		
+		// recursive call to the then statement
+		LIRUpType thenStat = ifStatement.thenStmt.accept(this, d);
+		tr += thenStat.lirCode;
+		
+		if (ifStatement.elseStmt!=null){
+			tr += "Jump "+endLabel+"\n";
+
+			// recursive call to the else statement
+			tr += falseLabel+":\n";
+			LIRUpType elseStat = ifStatement.elseStmt.accept(this, d);
+			tr += elseStat.lirCode;
 		}
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		
+		tr += endLabel+":\n";
+		
+		return new LIRUpType(tr, LIRAstNodeType.STATEMENT,"");
 	}
 
 	@Override
 	public LIRUpType visit(WhileStmt whileStmt, Integer d) {
-		// TODO Auto-generated method stub
-		symTab.enterScope();
-		whileStmt.thenStmt.accept(this, null);
-		symTab.exitScope();
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		int prevWhileID = currWhileIdentifier;
+		currWhileIdentifier = labelNumber;
+		
+		String str = "";
+		String whileLabel = "_while_cond_label"+labelNumber;
+		String endLabel = "_end_label"+(labelNumber++);
+		
+		str += whileLabel+":\n";
+		// recursive call to condition statement
+		LIRUpType conditionExp = whileStmt.condition.accept(this, d);
+		str += conditionExp.lirCode;
+		str += getMoveType(conditionExp.astNodeType);
+		str += conditionExp.register+",R"+d+"\n";
+		
+		// check condition
+		str += "Compare 0,R"+d+"\n";
+		str += "JumpTrue "+endLabel+"\n";
+		
+		// recursive call to operation statement
+		str += whileStmt.thenStmt.accept(this,d).lirCode;
+		str += "Jump "+whileLabel+"\n";
+		str += endLabel+":\n";
+		
+		currWhileIdentifier = prevWhileID;
+		return new LIRUpType(str, LIRAstNodeType.STATEMENT,"");
 	}
 
 	@Override
 	public LIRUpType visit(BreakStmt breakStmt, Integer d) {
-		// TODO Auto-generated method stub
-		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
+		String tr = "Jump _end_label"+currWhileIdentifier+"\n";
+		return new LIRUpType(tr, LIRAstNodeType.STATEMENT,"");
 	}
 
 	@Override

@@ -139,8 +139,22 @@ import semanticTypes.*;
 	}
 	
 	public int bytesInMemory(){
-		//TODO: this is a stub
-		//TODO: return number of bytes this class needs for allocation
-		return 8;
+		//return number of bytes this class needs for allocation = (number of fields+1)*4
+		int size=0;
+		size += this.getNumberOfFieldsRec() + 1;
+		size *= 4;		
+		return size;
+	}
+	
+	
+	// returns the number of fields in this class, including all of super's fields, recursively...
+	public int getNumberOfFieldsRec(){
+		int n=0;
+		n+=fields.keySet().size();
+		if (this.superName != null){
+			n+=((ClassSymbol) symbolTable.findEntryGlobal(this.superName)).getNumberOfFieldsRec();
+		}
+		
+		return n;
 	}
 }
