@@ -17,7 +17,7 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 	// count the number of string literals we have seen
 	protected int strLiteralsNumber = 0;
 	// map each literal string to the format 'str[i]'
-	protected Map<String,String> strLiterals = new HashMap<String,String>();
+	protected List<String> strLiterals = new ArrayList<String>();
 	// list of methods' lir code
 	protected List<String> methodsCodeList = new ArrayList<String>();
 	// main method's lir code
@@ -58,8 +58,10 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		
 		// insert string literals
 		lirCode += "# string literals #\n";
-		for (String str: this.strLiterals.keySet()){
-			lirCode += this.strLiterals.get(str)+": \""+str+"\"\n";
+		int i = 0;
+		for (String str: this.strLiterals){
+			lirCode += "str"+i+": \""+str+"\"\n";
+			i++;
 		}
 		lirCode+= "\n # dispatch table #\n";
 		
@@ -536,12 +538,10 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 		String strLiteral = "";
 		LiteralsEnum type = expr.type;
 		if (type == LiteralsEnum.QUOTE){
-			//TODO: 1. We don't have escape characters inside quotes (see slp.lex).
-			//      2. Why \\\\n and not \\n ?
-			String strVal = ((String) expr.value).replaceAll("\n", "\\\\n");
-			if (!strLiterals.containsKey(strVal))
-				strLiterals.put(strVal, "str"+(strLiteralsNumber++));
-			strLiteral = strLiterals.get(strVal);	
+			String strVal = ((String) expr.value);
+			if (!strLiterals.contains(strVal))
+				strLiterals.add(strVal);
+			strLiteral = "str"+strLiterals.indexOf(strVal);	
 		}	
 		if (type == LiteralsEnum.INTEGER){
 			strLiteral = expr.value.toString();
