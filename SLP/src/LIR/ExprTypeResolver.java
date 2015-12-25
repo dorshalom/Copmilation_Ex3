@@ -12,9 +12,11 @@ public class ExprTypeResolver implements PropagatingVisitor<Object, Object> {
 	private SymbolTable symTab;
 	private TypeTable typTab;
 	private String currentThisClass;
+	private String currentMethodName;
 	
-	public ExprTypeResolver(SymbolTable symtab, TypeTable typtab, String currentThisClass) {
+	public ExprTypeResolver(SymbolTable symtab, TypeTable typtab, String currentThisClass, String currentMethodName) {
 		this.currentThisClass = currentThisClass;
+		this.currentMethodName = currentMethodName;
 		this.symTab = symtab;
 		this.typTab = typtab;
 	}
@@ -149,6 +151,17 @@ public class ExprTypeResolver implements PropagatingVisitor<Object, Object> {
 		// local
 		}else{
 			sym = symTab.findEntryGlobal(varLoc.name);
+			if (sym == null){	// it must be a parameter
+				ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(currentThisClass);
+				MethodSymbol ms = null;
+				try {
+					ms = cs.getMethodSymbol(currentMethodName);
+				} catch (SemanticError e) {}
+				for (ParamSymbol p: ms.params){
+					if (p.name.equals(varLoc.name))
+						return p.type;
+				}
+			}
 		}		
 		
 		return sym.type;

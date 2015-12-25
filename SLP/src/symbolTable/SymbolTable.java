@@ -111,13 +111,13 @@ public class SymbolTable {
 *
 *	scopeLevel 1 (always exists)				    scopeLevel 2 (THIS class scope)		     	  scopeLevel 3 (Method scope)	 scopeLevel 4...N (Block scopes)
 *---------------------------------------------------------------------------------------------------------------------------------------------------------------
-*	Class A { Field_A ... Field_Z;				    CurrentClass_Field_A						  CurrentMethod_LocalVar_A		 CurrentBlock_LocalVar_A
-*			  Method A(Param_A...Param_Z)		    ...											  ...								 ...
-*			  ...								    CurrentClass_Field_Z						  CurrentMethod_LocalVar_Z	     CurrentBlock_LocalVar_Z
+*	Class A { Field_A ... Field_Z;				    CurrentClass_Field_A						  CurrentMethod_Param_A		 	 CurrentBlock_LocalVar_A
+*			  Method A(Param_A...Param_Z)		    ...											  ...							 ...
+*			  ...								    CurrentClass_Field_Z						  CurrentMethod_Param_Z	     	 CurrentBlock_LocalVar_Z
 *			  Method Z(Param_A...Param_Z)		
-*	}													  										  
-*																								  
-*	...													  										  
+*	}													  										  CurrentMethod_LocalVar_A
+*																								  ...
+*	...													  										  CurrentMethod_LocalVar_Z
 *
 *	Class Z { Field_A ... Field_Z;
 *			  Method A(Param_A...Param_Z)
