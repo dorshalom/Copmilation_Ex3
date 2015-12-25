@@ -540,7 +540,7 @@ public class LIRTranslator implements PropagatingVisitor<Integer, LIRUpType> {
 
 	@Override
 	public LIRUpType visit(ContinueStmt contStmt, Integer d) {
-		// TODO Auto-generated method stub
+		// TODO 
 		return new LIRUpType("", LIRAstNodeType.EXPLICIT,"");
 	}
 
