@@ -32,7 +32,8 @@ class Cow {
 	
 	int squeezeMilk(){
 		if(hasMilk()){
-			return milk - 1;
+			milk = milk - 1;
+			return milk;
 			Library.print("MooooOoOo!\n");
 		}
 		return 0;
