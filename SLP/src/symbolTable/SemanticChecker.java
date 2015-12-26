@@ -576,7 +576,12 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 				System.out.println(""+varLoc.line + ": Semantic error: undefined variable: " + varLoc.name);
 				System.exit(1);
 			}
-			
+			if (res instanceof FieldSymbol){
+				if(inStatic){
+					System.out.println(""+varLoc.line + ": Semantic error: Class field referenced in static method");
+					System.exit(1);
+				}
+			}
 			/* check if location is assigned */
 			if (!(res instanceof FieldSymbol)){
 				if (res instanceof VarSymbol){
