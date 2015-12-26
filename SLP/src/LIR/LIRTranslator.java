@@ -95,14 +95,14 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 			dispatchTableMap.put(cl.name, new HashMap<Integer,ArrayList<String>>());
 			int j = 0; // j will be the methods offset
 			
-			// has super - clone methods list from super class:	
+			// has super - clone methods list from super class, if the method doesn't exist in the current class.
 			if(cl.superName != null){ 	
 					
 				HashMap<Integer,ArrayList<String>> supersMethodsMap = dispatchTableMap.get(cl.superName);
 				for (int i=0;i<supersMethodsMap.keySet().size();i++){
 					String mName = supersMethodsMap.get(i).get(0);
 					String belongName = supersMethodsMap.get(i).get(1);
-					if (!cl.hasMethodWithName(mName)){
+					if (!cl.hasMethodWithName(mName)){  // if the method doesn't exist in the current class
 						ArrayList<String> methodDetails = new ArrayList<String>(2);
 						methodDetails.add(mName); methodDetails.add(belongName);
 						dispatchTableMap.get(cl.name).put(j, methodDetails);
@@ -174,37 +174,7 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 	public LIRUpType visit(Class cl, Object o) {
 		
 		currentThisClass = cl.name; //update current class
-		/*
-		// fill dispatch table:
-		dispatchTableMap.put(cl.name, new HashMap<Integer,ArrayList<String>>());
-		int j = 0;
 		
-		if(cl.superName != null){ // has super - clone methods list from super class:		
-				
-			HashMap<Integer,ArrayList<String>> supersMethodsMap = dispatchTableMap.get(cl.superName);
-			for (int i=0;i<supersMethodsMap.keySet().size();i++){
-				String mName = supersMethodsMap.get(i).get(0);
-				String belongName = supersMethodsMap.get(i).get(1);
-				if (!cl.hasMethodWithName(mName)){
-					ArrayList<String> methodDetails = new ArrayList<String>(2);
-					methodDetails.add(mName); methodDetails.add(belongName);
-					dispatchTableMap.get(cl.name).put(j, methodDetails);
-					j++;
-				}
-			}	
-		}
-		
-		// insert new methods into dispatch table map (if not static)
-		for (Method m: cl.methods){
-			
-			if(!m.isStatic){
-				ArrayList<String> methodDetails = new ArrayList<String>(2);
-				methodDetails.add(m.name); methodDetails.add(cl.name);
-				dispatchTableMap.get(cl.name).put(j, methodDetails);
-				j++;			
-			}
-		}
-		*/
 		// TODO: change offsets to support inheritance
 		int fieldOffset = 0;
 		for (Field f: cl.fields){
