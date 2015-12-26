@@ -48,4 +48,13 @@ public class Class extends ASTNode {
 		else
 			return name;
 	}
+	
+	public boolean hasMethodWithName(String name){
+		for (Method m: this.methods){
+			if (m.name.equals(name)){
+				return true;
+			}
+		}
+		return false;
+	}
 }

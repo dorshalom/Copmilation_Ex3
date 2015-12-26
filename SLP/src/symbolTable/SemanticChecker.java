@@ -376,8 +376,11 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
         if (assignStmt.lhs instanceof VarLocation){
         	//local var
         	if (((VarLocation)assignStmt.lhs).location == null){
-            VarSymbol lhsVar = (VarSymbol)symTab.findEntryGlobal(((VarLocation)assignStmt.lhs).name);
-            lhsVar.isAssigned = true;
+        		Symbol templhsVar = symTab.findEntryGlobal(((VarLocation)assignStmt.lhs).name);	
+        		if (!(templhsVar instanceof ParamSymbol)){
+        			VarSymbol lhsVar = (VarSymbol)symTab.findEntryGlobal(((VarLocation)assignStmt.lhs).name);
+        			lhsVar.isAssigned = true;
+        		}
         	}
         	
         	/*

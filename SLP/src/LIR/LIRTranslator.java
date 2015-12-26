@@ -26,7 +26,7 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 	// dispatch table lir code
 	private List<String> classDispatchTableCodeList = new ArrayList<String>();
 	// dispatch table map - maps class names to a list of <method, belongsToClassName>
-	private Map<String, HashMap<String,String>> dispatchTableMap = new HashMap<String,HashMap<String,String>>();
+	protected Map<String, HashMap<Integer,ArrayList<String>>> dispatchTableMap = new HashMap<String,HashMap<Integer,ArrayList<String>>>();
 	
 	private int curReg = 1;
 	private ASTNode root;
@@ -146,12 +146,42 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		currentThisClass = cl.name; //update current class
 		
 		
-		// fill dispatch table:
-		if(cl.superName == null){ // has no super 
-			dispatchTableMap.put(cl.name, new HashMap<String,String>());
+		for(Method m: cl.methods){
+
+			//visit all methods
+			symTab.enterScope();
+			m.accept(this,1);
+			symTab.exitScope();
 		}
-		else{ // has super - clone methods list from super class
-			dispatchTableMap.put(cl.name, (HashMap<String, String>) dispatchTableMap.get(cl.superName).clone());
+		
+		// fill dispatch table:
+		dispatchTableMap.put(cl.name, new HashMap<Integer,ArrayList<String>>());
+		int j = 0;
+		if(cl.superName != null){ 
+			// has super - clone methods list from super class:			
+			// go over each super's methods mName and check if this class has a method named m. if not, add it to the dispatch table with offset j.
+			// if it does exist so don't add it now (we will add it late as overridden). and don't do j++
+			HashMap<Integer,ArrayList<String>> supersMethodsMap = dispatchTableMap.get(cl.superName);
+			for (int i=0;i<supersMethodsMap.keySet().size();i++){
+				String mName = supersMethodsMap.get(i).get(0);
+				String belongName = supersMethodsMap.get(i).get(1);
+				if (!cl.hasMethodWithName(mName)){
+					ArrayList<String> methodDetails = new ArrayList<String>(2);
+					methodDetails.add(mName); methodDetails.add(belongName);
+					dispatchTableMap.get(cl.name).put(j, methodDetails);
+					j++;
+				}
+			}	
+		}
+		
+		for (Method m: cl.methods){
+			// insert new methods into dispatch table map (if not static)
+			if(!m.isStatic){
+				ArrayList<String> methodDetails = new ArrayList<String>(2);
+				methodDetails.add(m.name); methodDetails.add(cl.name);
+				dispatchTableMap.get(cl.name).put(j, methodDetails);
+				j++;			
+			}
 		}
 		
 		// TODO: change offsets to support inheritance
@@ -164,19 +194,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		}
 		
 		
-		for(Method m: cl.methods){
-			// insert new methods into dispatch table map (if not static)
-			if(!m.isStatic){
-				// if method already exists because of super class, than it will be overridden
-				dispatchTableMap.get(cl.name).put(m.name, cl.name);
-			}
-			
-			//visit all methods
-			symTab.enterScope();
-			m.accept(this, null);
-			symTab.exitScope();
-
-		}
 		
 		
 
@@ -810,16 +827,19 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 	
 	private void buildDispatchTableCode(){
 		
-		for (Map.Entry<String, HashMap<String,String>> ce: dispatchTableMap.entrySet()){ //go through each class entry		
+		for (Map.Entry<String, HashMap<Integer,ArrayList<String>>> ce: dispatchTableMap.entrySet()){ //go through each class entry		
 			String str="";
 			str+= "_DV_"+ ce.getKey() +": [";
-			for (Map.Entry<String, String> me: ce.getValue().entrySet()){ // go through each method entry
-				str+="_"+me.getValue()+"_"+me.getKey()+",";
+			 // go through each method entry
+			for (int i=0; i<ce.getValue().keySet().size();i++){
+				ArrayList<String> me = ce.getValue().get(i); // me is [methodName,BelgonsToClass]
+				str+="_"+me.get(1)+"_"+me.get(0)+",";
 			}
 			str = str.substring(0, str.length()-1); //chop the last ','
 			str+="]";
 			classDispatchTableCodeList.add(str);
 		}
+	
 	}
 	
 	private String getMoveType(LIRAstNodeType type){
