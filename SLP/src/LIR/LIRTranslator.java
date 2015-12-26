@@ -145,15 +145,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		
 		currentThisClass = cl.name; //update current class
 		
-		
-		for(Method m: cl.methods){
-
-			//visit all methods
-			symTab.enterScope();
-			m.accept(this,1);
-			symTab.exitScope();
-		}
-		
 		// fill dispatch table:
 		dispatchTableMap.put(cl.name, new HashMap<Integer,ArrayList<String>>());
 		int j = 0;
@@ -193,7 +184,13 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 			fieldOffset++;
 		}
 		
-		
+		for(Method m: cl.methods){
+
+			//visit all methods
+			symTab.enterScope();
+			m.accept(this,1);
+			symTab.exitScope();
+		}
 		
 		
 
@@ -512,7 +509,14 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		try {
 			ms = cs.getMethodSymbolRec(virtCall.funcName);
 		} catch (SemanticError e) {}
-		int offset = ms.getOffset();
+		int offset = 0;
+		HashMap<Integer,ArrayList<String>> offsetToMethod = dispatchTableMap.get(cs.name);
+		for (int i=0;i<offsetToMethod.size();i++){
+			if (offsetToMethod.get(i).get(0) == ms.name){
+				offset = i;
+				break;
+			}
+		}
 		
 		str += "VirtualCall R"+curReg+"."+offset+"(";
 		// insert <formal>=<argument register>
