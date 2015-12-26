@@ -279,7 +279,12 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		if (retStmt.expr != null){
 			LIRUpType returnVal = retStmt.expr.accept(this, null);
 			str += returnVal.lirCode;
-			str += "Return "+returnVal.register+"\n";
+			if (returnVal.astNodeType == LIRAstNodeType.EXTERNALVARLOC){
+				str += "MoveField "+returnVal.register+", R"+curReg+"\n";
+				str += "Return R"+curReg+"\n";
+			}
+			else
+				str += "Return "+returnVal.register+"\n";
 		} else {
 			str += "Return 9999\n";
 		}
