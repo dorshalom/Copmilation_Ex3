@@ -90,14 +90,44 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 	
 	@Override
 	public LIRUpType visit(Program program, Object o) {
-		// visit all classes in the program
+		/////// fill dispatch table: ///////
 		for(Class cl: program.classes){
-			// TODO: this check is redundant. we won't have a "Library" class in our program ever.
-			if (!cl.name.equals("Library")){ //skip library class
-				symTab.enterScope();
-				cl.accept(this, null);
-				symTab.exitScope();
+			dispatchTableMap.put(cl.name, new HashMap<Integer,ArrayList<String>>());
+			int j = 0; // j will be the methods offset
+			
+			// has super - clone methods list from super class:	
+			if(cl.superName != null){ 	
+					
+				HashMap<Integer,ArrayList<String>> supersMethodsMap = dispatchTableMap.get(cl.superName);
+				for (int i=0;i<supersMethodsMap.keySet().size();i++){
+					String mName = supersMethodsMap.get(i).get(0);
+					String belongName = supersMethodsMap.get(i).get(1);
+					if (!cl.hasMethodWithName(mName)){
+						ArrayList<String> methodDetails = new ArrayList<String>(2);
+						methodDetails.add(mName); methodDetails.add(belongName);
+						dispatchTableMap.get(cl.name).put(j, methodDetails);
+						j++;
+					}
+				}	
 			}
+			
+			// insert new methods into dispatch table map (if not static)
+			for (Method m: cl.methods){
+				
+				if(!m.isStatic){
+					ArrayList<String> methodDetails = new ArrayList<String>(2);
+					methodDetails.add(m.name); methodDetails.add(cl.name);
+					dispatchTableMap.get(cl.name).put(j, methodDetails);
+					j++;			
+				}
+			}
+		}
+		
+		/////// visit all classes in the program //////
+		for(Class cl: program.classes){
+			symTab.enterScope();
+			cl.accept(this, null);
+			symTab.exitScope();
 		}
 		
 		String lirCode = "";
@@ -144,14 +174,13 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 	public LIRUpType visit(Class cl, Object o) {
 		
 		currentThisClass = cl.name; //update current class
-		
+		/*
 		// fill dispatch table:
 		dispatchTableMap.put(cl.name, new HashMap<Integer,ArrayList<String>>());
 		int j = 0;
-		if(cl.superName != null){ 
-			// has super - clone methods list from super class:			
-			// go over each super's methods mName and check if this class has a method named m. if not, add it to the dispatch table with offset j.
-			// if it does exist so don't add it now (we will add it late as overridden). and don't do j++
+		
+		if(cl.superName != null){ // has super - clone methods list from super class:		
+				
 			HashMap<Integer,ArrayList<String>> supersMethodsMap = dispatchTableMap.get(cl.superName);
 			for (int i=0;i<supersMethodsMap.keySet().size();i++){
 				String mName = supersMethodsMap.get(i).get(0);
@@ -165,8 +194,9 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 			}	
 		}
 		
+		// insert new methods into dispatch table map (if not static)
 		for (Method m: cl.methods){
-			// insert new methods into dispatch table map (if not static)
+			
 			if(!m.isStatic){
 				ArrayList<String> methodDetails = new ArrayList<String>(2);
 				methodDetails.add(m.name); methodDetails.add(cl.name);
@@ -174,7 +204,7 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 				j++;			
 			}
 		}
-		
+		*/
 		// TODO: change offsets to support inheritance
 		int fieldOffset = 0;
 		for (Field f: cl.fields){
@@ -512,7 +542,7 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		int offset = 0;
 		HashMap<Integer,ArrayList<String>> offsetToMethod = dispatchTableMap.get(cs.name);
 		for (int i=0;i<offsetToMethod.size();i++){
-			if (offsetToMethod.get(i).get(0) == ms.name){
+			if (offsetToMethod.get(i).get(0).equals(ms.name)){
 				offset = i;
 				break;
 			}
@@ -830,6 +860,9 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 	}
 	
 	private void buildDispatchTableCode(){
+		
+		
+		
 		
 		for (Map.Entry<String, HashMap<Integer,ArrayList<String>>> ce: dispatchTableMap.entrySet()){ //go through each class entry		
 			String str="";
