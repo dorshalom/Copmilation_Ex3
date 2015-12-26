@@ -1,0 +1,557 @@
+# string literals #
+str1: " "
+str2: ""
+str3: "Invalid value for parameter `m'"
+str4: "Invalid value for parameter `n'"
+str5: "Invalid value for parameter `p'"
+
+# error messages #
+error_null_ref: "Runtime Error: Null pointer dereference!"
+error_array_bounds: "Runtime Error: Array index out of bounds!"
+error_array_negative: "Runtime Error: Array allocation with negative array size!"
+error_zero_division: "Runtime Error: Division by zero!"
+
+# dispatch table #
+_DV_MatrixMult: [_MatrixMult_multiply,_MatrixMult_initMatrix,_MatrixMult_printMatrix]
+
+# runtime checks #
+__checkNullRef:
+Move a, R0
+Compare 0, R0
+JumpTrue _error_checkNullRef
+Return Rdummy
+_error_checkNullRef:
+Library __println(error_null_ref), Rdummy
+Library __exit(1), Rdummy
+
+__checkArrayAccess:
+ArrayLength a, R0
+Compare i, R0
+JumpLE _error_checkArrayAccess
+Move i, R0
+Compare 0, R0
+JumpL _error_checkArrayAccess
+Return Rdummy
+_error_checkArrayAccess:
+Library __println(error_array_bounds), Rdummy
+Library __exit(1), Rdummy
+
+__checkSize:
+Move n, R0
+Compare 0, R0
+JumpL _error_checkSize
+Return Rdummy
+_error_checkSize:
+Library __println(error_array_negative), Rdummy
+Library __exit(1), Rdummy
+
+__checkZero:
+Move b, R0
+Compare 0, R0
+JumpTrue _error_checkZero
+Return Rdummy
+_error_checkZero:
+Library __println(error_zero_division), Rdummy
+Library __exit(1), Rdummy
+
+_MatrixMult_multiply:
+Move 0, R1
+Move R1, i3
+_while_cond_label0:
+Move i3, R1
+Move this, R2
+MoveField R2.1, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+ArrayLength R2, R2
+Move R2, R2
+Compare R2, R1
+JumpL _true_label1
+Move 0, R1
+Jump _end_label1
+_true_label1:
+Move 1, R1
+_end_label1:
+Compare 0, R1
+JumpTrue _end_label0
+Move 0, R1
+Move R1, j3
+_while_cond_label2:
+Move j3, R1
+Move this, R2
+MoveField R2.3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move i3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R2[R3], R2
+StaticCall __checkNullRef(a=R2), Rdummy
+ArrayLength R2, R2
+Move R2, R2
+Compare R2, R1
+JumpL _true_label3
+Move 0, R1
+Jump _end_label3
+_true_label3:
+Move 1, R1
+_end_label3:
+Compare 0, R1
+JumpTrue _end_label2
+Move 0, R1
+Move this, R2
+MoveField R2.3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move i3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R2[R3], R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move j3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R1, R2[R3]
+Move 0, R1
+Move R1, k3
+_while_cond_label4:
+Move k3, R1
+Move this, R2
+MoveField R2.1, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move i3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R2[R3], R2
+StaticCall __checkNullRef(a=R2), Rdummy
+ArrayLength R2, R2
+Move R2, R2
+Compare R2, R1
+JumpL _true_label5
+Move 0, R1
+Jump _end_label5
+_true_label5:
+Move 1, R1
+_end_label5:
+Compare 0, R1
+JumpTrue _end_label4
+Move this, R1
+MoveField R1.3, R1
+StaticCall __checkNullRef(a=R1), Rdummy
+Move i3, R2
+StaticCall __checkArrayAccess(a=R1, i=R2), Rdummy
+MoveArray R1[R2], R1
+StaticCall __checkNullRef(a=R1), Rdummy
+Move j3, R2
+StaticCall __checkArrayAccess(a=R1, i=R2), Rdummy
+MoveArray R1[R2], R1
+Move this, R2
+MoveField R2.1, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move i3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R2[R3], R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move k3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R2[R3], R2
+Move this, R3
+MoveField R3.2, R3
+StaticCall __checkNullRef(a=R3), Rdummy
+Move k3, R4
+StaticCall __checkArrayAccess(a=R3, i=R4), Rdummy
+MoveArray R3[R4], R3
+StaticCall __checkNullRef(a=R3), Rdummy
+Move j3, R4
+StaticCall __checkArrayAccess(a=R3, i=R4), Rdummy
+MoveArray R3[R4], R3
+Mul R3, R2
+Move R2, R2
+Add R2, R1
+Move R1, R1
+Move this, R2
+MoveField R2.3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move i3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R2[R3], R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move j3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R1, R2[R3]
+Move k3, R1
+Move 1, R2
+Add R2, R1
+Move R1, R1
+Move R1, k3
+Jump _while_cond_label4
+_end_label4:
+Move j3, R1
+Move 1, R2
+Add R2, R1
+Move R1, R1
+Move R1, j3
+Jump _while_cond_label2
+_end_label2:
+Move i3, R1
+Move 1, R2
+Add R2, R1
+Move R1, R1
+Move R1, i3
+Jump _while_cond_label0
+_end_label0:
+Return 9999
+
+_MatrixMult_initMatrix:
+Move 0, R1
+Move R1, i3
+_while_cond_label11:
+Move i3, R1
+Move m, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+ArrayLength R2, R2
+Move R2, R2
+Compare R2, R1
+JumpL _true_label12
+Move 0, R1
+Jump _end_label12
+_true_label12:
+Move 1, R1
+_end_label12:
+Compare 0, R1
+JumpTrue _end_label11
+Move 0, R1
+Move R1, j3
+_while_cond_label13:
+Move j3, R1
+Move m, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move i3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R2[R3], R2
+StaticCall __checkNullRef(a=R2), Rdummy
+ArrayLength R2, R2
+Move R2, R2
+Compare R2, R1
+JumpL _true_label14
+Move 0, R1
+Jump _end_label14
+_true_label14:
+Move 1, R1
+_end_label14:
+Compare 0, R1
+JumpTrue _end_label13
+Move i3, R1
+Move j3, R2
+Mul R2, R1
+Move R1, R1
+Move m, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move i3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R2[R3], R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move j3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R1, R2[R3]
+Move j3, R1
+Move 1, R2
+Add R2, R1
+Move R1, R1
+Move R1, j3
+Jump _while_cond_label13
+_end_label13:
+Move i3, R1
+Move 1, R2
+Add R2, R1
+Move R1, R1
+Move R1, i3
+Jump _while_cond_label11
+_end_label11:
+Return 9999
+
+_MatrixMult_printMatrix:
+Move 0, R1
+Move R1, i3
+_while_cond_label18:
+Move i3, R1
+Move m, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+ArrayLength R2, R2
+Move R2, R2
+Compare R2, R1
+JumpL _true_label19
+Move 0, R1
+Jump _end_label19
+_true_label19:
+Move 1, R1
+_end_label19:
+Compare 0, R1
+JumpTrue _end_label18
+Move 0, R1
+Move R1, j3
+_while_cond_label20:
+Move j3, R1
+Move m, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move i3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R2[R3], R2
+StaticCall __checkNullRef(a=R2), Rdummy
+ArrayLength R2, R2
+Move R2, R2
+Compare R2, R1
+JumpL _true_label21
+Move 0, R1
+Jump _end_label21
+_true_label21:
+Move 1, R1
+_end_label21:
+Compare 0, R1
+JumpTrue _end_label20
+Move m, R1
+StaticCall __checkNullRef(a=R1), Rdummy
+Move i3, R2
+StaticCall __checkArrayAccess(a=R1, i=R2), Rdummy
+MoveArray R1[R2], R1
+StaticCall __checkNullRef(a=R1), Rdummy
+Move j3, R2
+StaticCall __checkArrayAccess(a=R1, i=R2), Rdummy
+MoveArray R1[R2], R1
+Library __printi(R1), R1
+Move str1, R1
+Library __print(R1), R1
+Move j3, R1
+Move 1, R2
+Add R2, R1
+Move R1, R1
+Move R1, j3
+Jump _while_cond_label20
+_end_label20:
+Move str2, R1
+Library __println(R1), R1
+Move i3, R1
+Move 1, R2
+Add R2, R1
+Move R1, R1
+Move R1, i3
+Jump _while_cond_label18
+_end_label18:
+Move str2, R1
+Library __println(R1), R1
+Return 9999
+
+
+_ic_main:
+Move 4, R1
+Move R1, m3
+Move 3, R1
+Move R1, n3
+Move 4, R1
+Move R1, p3
+Move m3, R1
+Move 1, R2
+Compare R2, R1
+JumpL _true_label25
+Move 0, R1
+Jump _end_label25
+_true_label25:
+Move 1, R1
+_end_label25:
+Compare 0, R1
+JumpTrue _end_label24
+Move str3, R1
+Library __println(R1), R1
+Move 1, R1
+Library __exit(R1), R1
+_end_label24:
+Move n3, R1
+Move 1, R2
+Compare R2, R1
+JumpL _true_label27
+Move 0, R1
+Jump _end_label27
+_true_label27:
+Move 1, R1
+_end_label27:
+Compare 0, R1
+JumpTrue _end_label26
+Move str4, R1
+Library __println(R1), R1
+Move 1, R1
+Library __exit(R1), R1
+_end_label26:
+Move p3, R1
+Move 1, R2
+Compare R2, R1
+JumpL _true_label29
+Move 0, R1
+Jump _end_label29
+_true_label29:
+Move 1, R1
+_end_label29:
+Compare 0, R1
+JumpTrue _end_label28
+Move str5, R1
+Library __println(R1), R1
+Move 1, R1
+Library __exit(R1), R1
+_end_label28:
+Library __allocateObject(16), R1
+MoveField _DV_MatrixMult, R1.0
+Move R1, matMult3
+Move m3, R1
+Mul 4, R1
+StaticCall __checkSize(n=R1), Rdummy
+Library __allocateArray(R1), R1
+Move R1, R1
+Move matMult3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+MoveField R1, R2.1
+Move 0, R1
+Move R1, i3
+_while_cond_label30:
+Move i3, R1
+Move m3, R2
+Compare R2, R1
+JumpL _true_label31
+Move 0, R1
+Jump _end_label31
+_true_label31:
+Move 1, R1
+_end_label31:
+Compare 0, R1
+JumpTrue _end_label30
+Move n3, R1
+Mul 4, R1
+StaticCall __checkSize(n=R1), Rdummy
+Library __allocateArray(R1), R1
+Move R1, R1
+Move matMult3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+MoveField R2.1, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move i3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R1, R2[R3]
+Move i3, R1
+Move 1, R2
+Add R2, R1
+Move R1, R1
+Move R1, i3
+Jump _while_cond_label30
+_end_label30:
+Move n3, R1
+Mul 4, R1
+StaticCall __checkSize(n=R1), Rdummy
+Library __allocateArray(R1), R1
+Move R1, R1
+Move matMult3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+MoveField R1, R2.2
+Move 0, R1
+Move R1, i3
+_while_cond_label33:
+Move i3, R1
+Move n3, R2
+Compare R2, R1
+JumpL _true_label34
+Move 0, R1
+Jump _end_label34
+_true_label34:
+Move 1, R1
+_end_label34:
+Compare 0, R1
+JumpTrue _end_label33
+Move p3, R1
+Mul 4, R1
+StaticCall __checkSize(n=R1), Rdummy
+Library __allocateArray(R1), R1
+Move R1, R1
+Move matMult3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+MoveField R2.2, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move i3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R1, R2[R3]
+Move i3, R1
+Move 1, R2
+Add R2, R1
+Move R1, R1
+Move R1, i3
+Jump _while_cond_label33
+_end_label33:
+Move m3, R1
+Mul 4, R1
+StaticCall __checkSize(n=R1), Rdummy
+Library __allocateArray(R1), R1
+Move R1, R1
+Move matMult3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+MoveField R1, R2.3
+Move 0, R1
+Move R1, i3
+_while_cond_label36:
+Move i3, R1
+Move m3, R2
+Compare R2, R1
+JumpL _true_label37
+Move 0, R1
+Jump _end_label37
+_true_label37:
+Move 1, R1
+_end_label37:
+Compare 0, R1
+JumpTrue _end_label36
+Move p3, R1
+Mul 4, R1
+StaticCall __checkSize(n=R1), Rdummy
+Library __allocateArray(R1), R1
+Move R1, R1
+Move matMult3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+MoveField R2.3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+Move i3, R3
+StaticCall __checkArrayAccess(a=R2, i=R3), Rdummy
+MoveArray R1, R2[R3]
+Move i3, R1
+Move 1, R2
+Add R2, R1
+Move R1, R1
+Move R1, i3
+Jump _while_cond_label36
+_end_label36:
+Move matMult3, R1
+StaticCall __checkNullRef(a=R1), Rdummy
+Move matMult3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+MoveField R2.1, R2
+VirtualCall R1.1(m=R2), R1
+Move matMult3, R1
+StaticCall __checkNullRef(a=R1), Rdummy
+Move matMult3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+MoveField R2.2, R2
+VirtualCall R1.1(m=R2), R1
+Move matMult3, R1
+StaticCall __checkNullRef(a=R1), Rdummy
+Move matMult3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+MoveField R2.3, R2
+VirtualCall R1.1(m=R2), R1
+Move matMult3, R1
+StaticCall __checkNullRef(a=R1), Rdummy
+VirtualCall R1.0(), R1
+Move matMult3, R1
+StaticCall __checkNullRef(a=R1), Rdummy
+Move matMult3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+MoveField R2.1, R2
+VirtualCall R1.2(m=R2), R1
+Move matMult3, R1
+StaticCall __checkNullRef(a=R1), Rdummy
+Move matMult3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+MoveField R2.2, R2
+VirtualCall R1.2(m=R2), R1
+Move matMult3, R1
+StaticCall __checkNullRef(a=R1), Rdummy
+Move matMult3, R2
+StaticCall __checkNullRef(a=R2), Rdummy
+MoveField R2.3, R2
+VirtualCall R1.2(m=R2), R1

@@ -1,0 +1,116 @@
+class MatrixMult {
+    int[][] a, b, c;
+    
+    void multiply(){
+    	int i;
+    	int j;
+    	int k;
+	i = 0;
+	while(i < a.length){
+	    j = 0;
+	    while(j < c[i].length){
+	        c[i][j] = 0;
+	        k = 0;
+		while(k < a[i].length){
+	            c[i][j] = c[i][j] + a[i][k] * b[k][j];
+		    k = k + 1;
+	        }
+		j = j + 1;
+	    }
+	    i = i + 1;
+	}
+    }
+
+    void initMatrix(int[][] m) {
+	int i;
+	int j;
+	i = 0;
+	while(i < m.length){
+	    j = 0;
+	    while(j < m[i].length){
+	    	m[i][j] = i*j; //Library.random(m.length*2);
+	        j = j + 1;
+	    }
+	    i = i + 1;
+	}
+    }
+
+    void printMatrix(int[][] m) {
+	int i;
+	int j;
+	i = 0;
+	while(i < m.length) {
+	    j = 0;
+	    while(j< m[i].length){
+	        Library.printi(m[i][j]);
+	        Library.print(" ");
+	        j = j + 1;
+	    }
+	    Library.println("");
+	    i = i + 1;
+	}
+	Library.println("");
+    }
+
+    static void main(string[] args) {
+	int m;
+	int n;
+	int p;
+	int i;
+
+	/*if (args.length != 3) {
+	    Library.println("Invalid number of parameters.");
+	    Library.exit(1);
+	}
+
+	m = Library.stoi(args[0], 0);
+	n = Library.stoi(args[1], 0);
+	p = Library.stoi(args[2], 0);
+	*/
+	m = 4;
+	n = 3;
+	p = 4;
+	if(m < 1){
+	    Library.println("Invalid value for parameter `m'");
+	    Library.exit(1);
+	}
+	if(n < 1){
+	    Library.println("Invalid value for parameter `n'");
+	    Library.exit(1);
+	}
+	if(p < 1){
+	    Library.println("Invalid value for parameter `p'");
+	    Library.exit(1);
+	}
+	MatrixMult matMult = new MatrixMult();
+
+	matMult.a = new int[][m];
+	i = 0;
+	while(i < m){
+	    matMult.a[i] = new int[n];
+	    i = i + 1;
+	}
+	
+	matMult.b = new int[][n];
+	i = 0;
+	while(i < n){
+	    matMult.b[i] = new int[p];
+	    i = i + 1;
+	}
+	
+	matMult.c = new int[][m];
+	i = 0;
+	while(i < m){
+	    matMult.c[i] = new int[p];
+	    i = i + 1;
+	}
+
+	matMult.initMatrix(matMult.a);
+	matMult.initMatrix(matMult.b);
+	matMult.initMatrix(matMult.c);
+	matMult.multiply();
+	matMult.printMatrix(matMult.a);
+	matMult.printMatrix(matMult.b);
+	matMult.printMatrix(matMult.c);
+    }
+}
