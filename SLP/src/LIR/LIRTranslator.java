@@ -228,6 +228,12 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		}
 		methodCode+=methodHeadLine;
 		
+		try{
+			for (Formal f: method.formalList){
+				symTab.addEntry(new ParamSymbol("__p_"+f.name, typTab.resolveType(f.type.getName())));
+			}
+		}catch(SemanticError se){}
+		
 		// visit all statements and add their code to methodCode
 		for (Stmt s: method.statementList){
 			methodCode += s.accept(this, null).lirCode;
@@ -570,8 +576,13 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 			return new LIRUpType(str, LIRAstNodeType.EXTERNALVARLOC, "R"+curReg+"."+fieldOffset);
 		// ID
 		}else{
+			String localVarName = "";
 			int scopeLevel = symTab.findScopeLevel(varLoc.name);
-			if (scopeLevel == 2){	// it is a field of THIS
+			if (scopeLevel > 2)	// its' a local variable
+				localVarName = varLoc.name + scopeLevel;
+			else if (symTab.findEntryGlobal("__p_"+varLoc.name) != null) // it's a function parameter => leave it's name as is
+				localVarName = varLoc.name;
+			else if (scopeLevel == 2){	// it's a field of THIS
 				ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(currentThisClass);
 				FieldSymbol fs = null;
 				try{
@@ -582,12 +593,8 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 				str += "Move this, R"+curReg+"\n";
 
 				return new LIRUpType(str, LIRAstNodeType.EXTERNALVARLOC, "R"+curReg+"."+fieldOffset);
-			}else{
-				// it's not a field, so it must be local variable
-				// scopeLevel of -1 means this variable is not in symTable => it's a function parameter => leave it's name as is
-				String localVarName = (scopeLevel == -1 ? varLoc.name : varLoc.name + scopeLevel);
-				return new LIRUpType("",LIRAstNodeType.LOCALVARLOC, localVarName);
 			}
+			return new LIRUpType("",LIRAstNodeType.LOCALVARLOC, localVarName);
 		}
 	}
 

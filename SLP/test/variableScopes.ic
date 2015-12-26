@@ -1,0 +1,22 @@
+class C{
+	int j;
+
+	void test(int j){
+		Library.printi(j);
+		Library.println("");
+		j = 2;
+		Library.printi(j);
+		Library.println("");
+		this.j = 3;
+		Library.printi(this.j);
+		Library.println("");
+		{
+			int j = 4;
+			Library.printi(j);
+			Library.println("");
+		}
+	}
+	static void main(string[] args) {
+		(new C()).test(1);
+	}
+}
