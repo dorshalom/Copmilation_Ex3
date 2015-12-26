@@ -831,11 +831,14 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 			String str="";
 			str+= "_DV_"+ ce.getKey() +": [";
 			 // go through each method entry
-			for (int i=0; i<ce.getValue().keySet().size();i++){
+			int i;
+			for (i=0; i<ce.getValue().keySet().size();i++){
 				ArrayList<String> me = ce.getValue().get(i); // me is [methodName,BelgonsToClass]
 				str+="_"+me.get(1)+"_"+me.get(0)+",";
 			}
-			str = str.substring(0, str.length()-1); //chop the last ','
+			if (i > 0){
+				str = str.substring(0, str.length()-1); //chop the last ','
+			}
 			str+="]";
 			classDispatchTableCodeList.add(str);
 		}
