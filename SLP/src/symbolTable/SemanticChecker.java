@@ -196,17 +196,20 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 				System.out.println(""+cl.line + ": "+se);
 				System.exit(1);
 			}
-			// TODO: change offsets to support inheritance
-			// TODO: field offsets must start with 1. 0 is virtual table
-			int fieldOffset = 1;
+			// update nextFieldOffset according to super
+			if(cl.superName != null){
+				ClassSymbol superCs = (ClassSymbol) symTab.findEntryGlobal(cl.superName);
+				sym.nextFieldOffset = superCs.nextFieldOffset;
+			}
+			// go over all fields and add to sym, with the updated offset
 			for (Field f: cl.fields){
 				try{
-					sym.addFieldSymbol(f.name, typTab.resolveType(f.type.getName()),fieldOffset);
+					sym.addFieldSymbol(f.name, typTab.resolveType(f.type.getName()),sym.nextFieldOffset);
 				} catch (SemanticError se){
 					System.out.println(""+f.line + ": "+se);
 					System.exit(1);
 				}
-				fieldOffset++;
+				sym.nextFieldOffset++;
 			}
 			
 			int methodOffset = 0;

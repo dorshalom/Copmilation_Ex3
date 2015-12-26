@@ -9,12 +9,14 @@ import semanticTypes.*;
 	private Map<String, FieldSymbol> fields = new HashMap<String,FieldSymbol>();
 	private SymbolTable symbolTable;
 	public final String superName; 
+	public int nextFieldOffset;
 	
 	// for classes without super
 	public ClassSymbol(String name, SymbolTable global)  throws SemanticError{
 		super(name, new SClassType(name));
 		superName = null;
 		this.symbolTable = global;
+		this.nextFieldOffset = 1;
 	}
 	
 	// for classes with super
@@ -22,6 +24,7 @@ import semanticTypes.*;
 		super(name, new SClassType(name, superName, typeTable));
 		this.symbolTable = global;
 		this.superName = superName;
+		this.nextFieldOffset = 1;
 	}
 
 	// for classes without super with offset
@@ -29,6 +32,7 @@ import semanticTypes.*;
 		super(name, new SClassType(name), offset);
 		superName = null;
 		this.symbolTable = global;
+		this.nextFieldOffset = 1;
 	}
 	
 	// for classes with super with offset
@@ -36,6 +40,7 @@ import semanticTypes.*;
 		super(name, new SClassType(name, superName, typeTable), offset);
 		this.symbolTable = global;
 		this.superName = superName;
+		this.nextFieldOffset = 1;
 	}
 
 	// try to find a member method by its name. Looks only in current class

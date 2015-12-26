@@ -510,6 +510,7 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 			ms = cs.getMethodSymbolRec(virtCall.funcName);
 		} catch (SemanticError e) {}
 		int offset = 0;
+		// find method's offset according to dispatch table
 		HashMap<Integer,ArrayList<String>> offsetToMethod = dispatchTableMap.get(cs.name);
 		for (int i=0;i<offsetToMethod.size();i++){
 			if (offsetToMethod.get(i).get(0).equals(ms.name)){
