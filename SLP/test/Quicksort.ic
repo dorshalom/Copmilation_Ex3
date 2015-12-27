@@ -14,7 +14,7 @@
 
 class Quicksort {
     int[] a;
-	
+
     int partition(int low, int high) {
     int pivot = a[low];
     int i = low;
@@ -46,11 +46,16 @@ class Quicksort {
     }
 
     void initArray() {
-    int i = 0;
-    while(i < a.length) {
-        a[i] =  Library.random(a.length*2);
-        i = i+1;
-    }
+    a[0] = 77;
+    a[1] = 99;
+    a[2] = 44;
+    a[3] = 55;
+    a[4] = 22;
+    a[5] = 88;
+    a[6] = 11;
+    a[7] = 0;
+    a[8] = 66;
+    a[9] = 33;
     }
 
     void printArray() {
@@ -62,22 +67,13 @@ class Quicksort {
         Library.print (" ");
         i = i+1;
     }
-    Library.print("\n");
+    Library.println("");
     }
 
     static void main(string[] args) {
     int n;
 
-    if (args.length != 1) {
-        Library.println("Unspecified array length");
-        Library.exit(1);
-    }
-
-    n = Library.stoi(args[0],0);
-    if (n<=0) {
-        Library.println("Invalid array length");
-        Library.exit(1);
-    }
+    n = 10;
     Quicksort s = new Quicksort();
     s.a = new int[n];
 

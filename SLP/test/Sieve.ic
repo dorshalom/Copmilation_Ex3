@@ -38,7 +38,7 @@ class Sieve {
       i=i+n;
     }
   }
- 
+
   void printPrimes() {
     int i = 2;
     Library.print("Primes less than ");
@@ -55,25 +55,14 @@ class Sieve {
 
 
   static void main(string[] args) {
-	string[] param = new string[1];
-	param[0] = "77";
-    (new Sieve()).test(param);
+    (new Sieve()).test();
   }
 
-  void test(string[] args) {
+  void test() {
     int n;
 
-    if (args.length != 1) {
-      Library.println("Unspecified number.");
-      return;
-    }
-
     Library.println("");
-    n = Library.stoi(args[0], 0);
-    if (n <= 0) {
-      Library.println("Invalid array length");
-      return;
-    }
+    n = 100;
     num = new int[n];
 
     initArray();

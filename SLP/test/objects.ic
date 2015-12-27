@@ -1,0 +1,39 @@
+class A {
+  int a;
+  void m() {
+    Library.println("A fields: " +
+            Library.itos(a));
+  }
+}
+
+class B extends A {
+  boolean b;
+  void m() {
+    Library.print("B fields: ");
+    Library.printi(a);
+    Library.print(", ");
+    Library.printb(b);
+    Library.println("");
+  }
+}
+
+class C {
+  static void main(string[] args) {
+    A oa = new A();
+    B ob = new B();
+
+	oa.a = 412;
+    ob.a = 413;
+    ob.b = true;
+
+    oa.m();
+
+    oa = ob;
+
+    oa.a = 412;
+    ob.a = 413;
+    ob.b = true;
+
+    oa.m();
+  }
+}

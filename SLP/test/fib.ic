@@ -1,0 +1,18 @@
+class Fibonacci {
+    static void main(string[] args) {
+        int n;
+        int r;
+
+        n = 10;
+        r = Fibonacci.fib(n);
+
+        Library.printi(r);
+        Library.println("");
+    }
+
+    static int fib(int n) {
+        if (n < 2)
+            return n;
+        return Fibonacci.fib(n-1) + Fibonacci.fib(n-2);
+    }
+}

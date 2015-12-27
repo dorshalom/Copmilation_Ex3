@@ -1,3 +1,8 @@
+/*
+ * An array which can Bubble sort it's elements.
+ * Code originated from java:
+ * http://www.samspublishing.com/articles/article.asp?p=31526&seqNum=2&rl=1
+ */
 class ArrayBub {
 
 	int[] a; // ref to array a
@@ -26,19 +31,17 @@ class ArrayBub {
 	}
 
 	void bubbleSort() {
-		int i;
-		boolean flag = true;
+		int out = n - 1;
+		int in;
 
-		while(flag == true){
-			flag = false;
-			i = 0;
-			while(i < n-1){
-				if(a[i] < a[i+1]){
-					swap(i, i+1);
-					flag = true;
-				}
-				i = i + 1;
+		while (out > 1) { // outer loop (backward)
+			in = 0;
+			while (in < out) { // inner loop (forward)
+				if (a[in] > a[in + 1]) // out of order?
+					swap(in, in + 1); // swap them
+				in = in + 1;
 			}
+			out = out - 1;
 		}
 	} // end bubbleSort()
 
@@ -56,6 +59,7 @@ class ArrayBub {
 
 		ArrayBub arr; // reference to array
 		arr = new ArrayBub(); // create the array
+
 		arr.init();
 
 		arr.insert(77); // insert 10 items

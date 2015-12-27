@@ -1,3 +1,8 @@
+/**
+ * Test number 1: 
+ * A day in the life of a farmer.
+ */
+
 class Farmer {
   
   string name;
@@ -15,7 +20,7 @@ class Farmer {
   	while(i < catAmount && milk>0){
   		Library.println("Miao!");
   		milk = milk - 1;
-		i = i + 1;
+  		i = i + 1;
   	} 	
   }
 }
@@ -35,13 +40,13 @@ class Cow {
 		if(hasMilk()){
 			milk = milk - 1;
 			Library.println("MooooOoOo!");
-			return 1;
+			return milk;
 		}
 		return 0;
 	}
 	
 	void sleep(){
-		milk = milk + 3;
+		milk = milk + 10;
 	}
 }
 
@@ -63,28 +68,28 @@ class Farm {
 	    int i = 0;
 	    while(i < cows.length){
 	    	cows[i] = new Cow();
-	    	cows[i].milk = 1;
-			i = i + 1;
+	    	cows[i].milk = (i%2)*10;
+	    	i = i + 1;
 	    }
 	    
 		// Create a stereotypical farmer:
 		farmer = new Farmer();		
 		farmer.name = "Old McDonald";
 		farmer.milk = 0;		
-		farmer.catAmount = 5;
+		farmer.catAmount = 20;
 		
 		// Commence daily routine!
 		Library.println("(before sunrise)");
 		i = 0;
 	    while(i < cows.length){
 	    	farmer.milkCow(cows[i]);
-			i = i + 1;
+	    	i = i + 1;
 	    }						
 		Library.println("(After sunset)");
 		i = 0;
 	    while(i < cows.length){
 	    	cows[i].sleep();
-			i = i + 1;
+	    	i = i + 1;
 	    }							
    		
    		// Oh oh - the cats are hungry!

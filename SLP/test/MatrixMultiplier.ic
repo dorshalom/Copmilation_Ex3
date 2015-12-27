@@ -1,0 +1,106 @@
+class MatrixMultiplier {
+
+	void runTest(int n) {
+		int[][] a = new int[][n];
+		int[][] b = new int[][n];
+		int[][] c = new int[][n];
+		int i = 0;
+		
+		while (i<n) {
+			int j = 0;
+			
+			a[i] = new int[n];
+			b[i] = new int[n];
+			c[i] = new int[n];
+			while (j<n) {
+				a[i][j]=i*j;
+				b[i][j]=i+j;
+				j = j + 1;
+			}
+			i = i + 1;
+		}
+		printMatrix(a,n);
+		printMatrix(b,n);
+		multMatrix(a,b,c,n);
+		printMatrix(c,n);
+	}
+
+	void multMatrix(int[][] a, int[][] b, int[][] c, int n) {
+		int i = 0;
+		
+	    while (i<n) {
+	    	int j = 0;
+	    
+	        while (j<n) {
+	        	int k = 0;
+	        
+	        	while (k<n) {
+	            	c[i][j] = c[i][j] + a[i][k]*b[k][j];
+	            	k = k + 1;
+	            }
+	            j = j + 1;
+	        }
+	        i = i + 1;
+	    }
+	}
+	
+	void printMatrix(int[][] a, int n) {
+		int i = 0;
+		
+		while (i<n) {
+			int j = 0;
+		
+			while (j<n) {
+				Library.print(Library.itos(a[i][j])+"    ");
+				j = j + 1;
+			}
+			Library.println(" ");
+			i = i + 1;
+		}
+		Library.println(" ");
+	}
+
+}
+
+class OptimizedMatrixMultiplier extends MatrixMultiplier {
+	
+	void multMatrix(int[][] a, int[][] b, int[][] c, int n) {
+		int i = 0;
+	    int j;
+	    int k;
+	    int nj;
+	    int nk;
+	    int r=0;
+
+	    while (i<n) {
+	    	j = 0;
+	      	nj = 0;
+	        while (j<n) {
+	        	k = 0;
+	          	nk = 0;
+	            while (k<n) { /* optimization - loop unrolling */
+	            	r = r + (a[i][k] * b[k][j])+(a[i][k+1] * b[k+1][j]);
+	                k = k + 2;
+	                nk = nk + 2*n;
+	            }
+	            c[i][j] = r;
+	            j = j + 1;
+	            nj = nj + n;
+	            r = 0;
+	        }
+	        i = i + 1;
+	    }
+	}
+	
+}
+
+class MultiplyMatrices {
+
+	static void main(string[] args) {
+		MatrixMultiplier matrixMultiplier = new MatrixMultiplier();
+		MatrixMultiplier optimizedMatrixMultiplier = new OptimizedMatrixMultiplier();
+		matrixMultiplier.runTest(4);
+		optimizedMatrixMultiplier.runTest(4);
+	}
+
+}
