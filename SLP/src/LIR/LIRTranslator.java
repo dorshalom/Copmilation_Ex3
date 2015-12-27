@@ -257,9 +257,7 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 	public LIRUpType visit(AssignStmt assignStmt, Object o) {
 		String str = "";
 		
-		if(assignStmt.rhs instanceof NewClassExpr){
-			runtimeType = (SemanticType) assignStmt.rhs.accept(new ExprTypeResolver(symTab, typTab, currentThisClass, currentMethodName), null);
-		}
+		runtimeType = (SemanticType) assignStmt.rhs.accept(new ExprTypeResolver(symTab, typTab, currentThisClass, currentMethodName), null);
 			
 		LIRUpType rhs = assignStmt.rhs.accept(this, null);
 		
@@ -734,11 +732,9 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		String reg = "R"+curReg;
 		
 		if (localVarStmt.init != null){
-			if(localVarStmt.init instanceof NewClassExpr){
-				runtimeType = (SemanticType) localVarStmt.init.accept(new ExprTypeResolver(symTab, typTab, currentThisClass, currentMethodName), null);
-				Symbol s = symTab.findEntryLocal(localVarStmt.name);
-				s.runtimeType = runtimeType;
-			}
+			runtimeType = (SemanticType) localVarStmt.init.accept(new ExprTypeResolver(symTab, typTab, currentThisClass, currentMethodName), null);
+			Symbol s = symTab.findEntryLocal(localVarStmt.name);
+			s.runtimeType = runtimeType;
 
 			LIRUpType initVal = localVarStmt.init.accept(this, null);
 			str += initVal.lirCode;
