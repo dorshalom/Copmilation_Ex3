@@ -177,6 +177,21 @@ import slp.Method;
 		return n;
 	}
 	
+	// retrieve recursively all methods of this class(virtual or static, including inherited).
+	// In case the some functions are overridden, only the last one will be returned
+	public Collection<MethodSymbol> getMethodNames(){
+		Map<String, MethodSymbol> map = new HashMap<String,MethodSymbol>(this.methods);
+		List<MethodSymbol> list = new ArrayList<MethodSymbol>();
+		if (superName != null){
+			ClassSymbol cs = (ClassSymbol) symbolTable.findEntryGlobal(superName);
+			list.addAll(cs.getMethodsRec());
+		}
+		for(MethodSymbol ms: list){
+			if(!map.containsKey(ms.name))
+				map.put(ms.name, ms);
+		}
+		return map.values();
+	}
 	
 	public List<MethodSymbol> getMethodsRec(){
 		List<MethodSymbol> list = new ArrayList<MethodSymbol>(methods.values());
@@ -187,6 +202,7 @@ import slp.Method;
 		return list;
 	}
 	
+	// retrieve recursively all fields of this class(including inherited)
 	public List<FieldSymbol> getFieldsRec(){
 		List<FieldSymbol> list = new ArrayList<FieldSymbol>(fields.values());
 		if (superName != null){

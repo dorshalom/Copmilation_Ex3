@@ -290,7 +290,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 		}*/
 
 		ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(cl.name);
-		for (MethodSymbol m: cs.getMethodsRec()){
+		for (MethodSymbol m: cs.getMethodNames()){
 			symTab.addEntry(m);
 		}
 		for (FieldSymbol f: cs.getFieldsRec()){

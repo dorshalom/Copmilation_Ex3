@@ -169,7 +169,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		return new LIRUpType(lirCode, LIRAstNodeType.EXPLICIT,"");
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public LIRUpType visit(Class cl, Object o) {
 		
