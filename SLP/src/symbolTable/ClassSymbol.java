@@ -178,7 +178,7 @@ import slp.Method;
 	}
 	
 	// retrieve recursively all methods of this class(virtual or static, including inherited).
-	// In case the some functions are overridden, only the last one will be returned
+	// In case some functions are overridden, only the last one will be returned
 	public Collection<MethodSymbol> getMethodNames(){
 		Map<String, MethodSymbol> map = new HashMap<String,MethodSymbol>(this.methods);
 		List<MethodSymbol> list = new ArrayList<MethodSymbol>();

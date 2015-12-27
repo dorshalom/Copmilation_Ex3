@@ -330,7 +330,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		String endLabel = "_end_label"+(labelNumber++);
 		String str = "";
 		
-		// recursive call to leftOp
 		LIRUpType leftOp = binaryOp.leftOp.accept(this, null);
 		str += leftOp.lirCode;
 		str += getMoveType(leftOp.astNodeType);
@@ -381,7 +380,7 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 				str += "JumpFalse "+trueLabel+"\n"; 
 				break;
 			default:
-				System.err.println("* Error in logical binaryOP *");	
+				System.out.println("Error in logical binaryOP");	
 			}
 			str += "Move 0, R"+curReg+"\n";
 			str += "Jump "+endLabel+"\n";
@@ -394,11 +393,11 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		else{
 			switch (binaryOp.operator){
 			case PLUS:
-				// check if operation is on strings or on integers
+				// resolve the type of the operands. expecting ints or strings
 				SemanticType operandType = (SemanticType) binaryOp.rightOp.accept(new ExprTypeResolver(symTab, typTab, currentThisClass, currentMethodName), null);
 				if (operandType == typTab.intType){
 					str += "Add R"+(curReg+1)+", R"+curReg+"\n";
-				} else { // strings
+				} else {
 					str += "Library __stringCat(R"+curReg+", R"+(curReg+1)+"), R"+curReg+"\n";
 				}
 				break;
@@ -409,7 +408,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 				str += "Mul R"+(curReg+1)+", R"+curReg+"\n";
 				break;
 			case DIVIDE:
-				// check division by zero
 				str += "StaticCall __checkZero(b=R"+(curReg+1)+"), Rdummy\n";
 				str += "Div R"+(curReg+1)+", R"+curReg+"\n";
 				break;
@@ -417,7 +415,7 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 				str += "Mod R"+(curReg+1)+", R"+curReg+"\n";
 				break;
 			default:
-				System.err.println("*** YOUR PARSER SUCKS ***");
+				System.out.println("Error in math binaryOp");
 			}
 			
 			return new LIRUpType(str, LIRAstNodeType.REGISTER,"R"+curReg);
@@ -429,7 +427,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 	public LIRUpType visit(StaticCall staticCall, Object o) {
 		String str = "";
 		
-		// recursive calls to all arguments
 		int curRegBackup = curReg;
 		for (Expr arg: staticCall.args){
 			LIRUpType argExp = arg.accept(this, null);
@@ -442,10 +439,9 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		}
 		curReg = curRegBackup;
 				
-		// Library method call
+		// it's a Library call
 		if (staticCall.className.equals("Library")){
 			str += "Library __"+staticCall.funcName+"(";
-			// iterate over values (registers)
 			for(int i = 0; i < staticCall.args.size(); i++){
 				str += "R"+(i+curReg);
 				if (i < staticCall.args.size()-1)
@@ -465,10 +461,9 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 			ms = cs.getMethodSymbol(staticCall.funcName);
 		} catch (SemanticError se) {}
 
-		// construct method label
+		// create a label
 		String methodName = "_"+cs.name+"_"+ms.name;
 		str += "StaticCall "+methodName+"(";
-		// insert <formal>=<argument register>
 		for(int i = 0; i < staticCall.args.size(); i++){
 			str += ms.params.get(i).name+"=R"+(curReg+i);
 			if (i < staticCall.args.size()-1)
@@ -484,7 +479,7 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		String str = "";
 		String className;
 		
-		// recursive call to call location
+		// external
 		if (virtCall.location != null){
 			className = ((SemanticType)virtCall.location.accept(new ExprTypeResolver(symTab, typTab, currentThisClass, currentMethodName), null)).name;
 			LIRUpType location = virtCall.location.accept(this, null);
@@ -493,9 +488,9 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 				str += getMoveType(location.astNodeType);
 				str += location.register+", R"+curReg+"\n";
 			}
-			// check location null reference
+
 			str += "StaticCall __checkNullRef(a=R"+curReg+"), Rdummy\n";
-		} else {
+		} else {	// local
 			className = currentThisClass;
 			str += "Move this, R"+curReg+"\n";
 		}
@@ -528,7 +523,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		}
 		
 		str += "VirtualCall R"+curReg+"."+offset+"(";
-		// insert <formal>=<argument register>
 		for(int i = 0; i < virtCall.args.size(); i++){
 			str += ms.params.get(i).name+"=R"+(curReg+i+1);
 			if (i < virtCall.args.size()-1)
@@ -545,9 +539,7 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		
 		// location.ID
 		if (varLoc.location != null){
-			// translate the location
 			LIRUpType loc = varLoc.location.accept(this, null);
-			// add code to translation
 			str += loc.lirCode;
 			
 			// get the type of the location
@@ -561,13 +553,11 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 			}catch (SemanticError se){}			 
 			int fieldOffset = fs.getOffset();
 			
-			// translate this step
 			if(loc.astNodeType != LIRAstNodeType.REGISTER){
 				str += getMoveType(loc.astNodeType);
 				str += loc.register+", R"+curReg+"\n";
 			}
 			
-			// check external location null reference
 			str += "StaticCall __checkNullRef(a=R"+curReg+"), Rdummy\n";
 			
 			return new LIRUpType(str, LIRAstNodeType.EXTERNALVARLOC, "R"+curReg+"."+fieldOffset);
@@ -599,29 +589,26 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 	public LIRUpType visit(ArrayLocation arrLoc, Object o) {
 		String str = "";
 		
-		// visit array
 		LIRUpType array = arrLoc.array.accept(this, null);
 		str += array.lirCode;
 		if(array.astNodeType != LIRAstNodeType.REGISTER){
 			str += getMoveType(array.astNodeType);
 			str += array.register+", R"+curReg+"\n";
 		}
-		// check array null reference
+
 		str += "StaticCall __checkNullRef(a=R"+curReg+"), Rdummy\n";
 		
-		// visit index
 		++curReg;
 		LIRUpType index = arrLoc.index.accept(this, null);
 		--curReg;
+		
 		str += index.lirCode;
 		if(index.astNodeType != LIRAstNodeType.REGISTER){
 			str += getMoveType(index.astNodeType);
 			str += index.register+", R"+(curReg+1)+"\n";
 		}
 		
-		// check array access
 		str += "StaticCall __checkArrayAccess(a=R"+curReg+", i=R"+(curReg+1)+"), Rdummy\n";
-		
 		return new LIRUpType(str, LIRAstNodeType.ARRAYLOC,"R"+curReg+"[R"+(curReg+1)+"]");
 	}
 
@@ -648,19 +635,17 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		String falseLabel = "_false_label"+labelNumber;
 		String endLabel = "_end_label"+(labelNumber++);
 		
-		// recursive call the condition expression
 		LIRUpType condExp = ifStatement.condition.accept(this, null);
 		str += condExp.lirCode;
 		if (condExp.astNodeType != LIRAstNodeType.REGISTER){
 			str += getMoveType(condExp.astNodeType);
 			str += condExp.register+", R"+curReg+"\n";
 		}
-		// check condition
+		
 		str += "Compare 0, R"+curReg+"\n";
 		if (ifStatement.elseStmt!=null) str += "JumpTrue "+falseLabel+"\n";
 		else str += "JumpTrue "+endLabel+"\n";
 		
-		// recursive call to the then statement
 		symTab.enterScope();
 		LIRUpType thenStat = ifStatement.thenStmt.accept(this, null);
 		symTab.exitScope();
@@ -669,7 +654,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		if (ifStatement.elseStmt!=null){
 			str += "Jump "+endLabel+"\n";
 
-			// recursive call to the else statement
 			str += falseLabel+":\n";
 			symTab.enterScope();
 			LIRUpType elseStat = ifStatement.elseStmt.accept(this, null);
@@ -692,18 +676,16 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		String endLabel = "_end_label"+(labelNumber++);
 		
 		str += whileLabel+":\n";
-		// recursive call to condition statement
 		LIRUpType conditionExp = whileStmt.condition.accept(this, null);
 		str += conditionExp.lirCode;
 		if (conditionExp.astNodeType != LIRAstNodeType.REGISTER){
 			str += getMoveType(conditionExp.astNodeType);
 			str += conditionExp.register+", R"+curReg+"\n";
 		}
-		// check condition
+
 		str += "Compare 0, R"+curReg+"\n";
 		str += "JumpTrue "+endLabel+"\n";
 		
-		// recursive call to operation statement
 		symTab.enterScope();
 		str += whileStmt.thenStmt.accept(this, null).lirCode;
 		symTab.exitScope();
@@ -776,8 +758,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 			str += size.register+", R"+curReg+"\n";
 		}
 		str += "Mul 4, R"+curReg+"\n";
-		
-		// make sure index is non-negative
 		str += "StaticCall __checkSize(n=R"+curReg+"), Rdummy\n";
 		str += "Library __allocateArray(R"+curReg+"), R"+curReg+"\n";
 		
@@ -795,7 +775,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 			str += array.register+", R"+curReg+"\n";
 		}
 		
-		// make sure context is non-null
 		str += "StaticCall __checkNullRef(a=R"+curReg+"), Rdummy\n";
 		str += "ArrayLength R"+curReg+", R"+curReg+"\n";
 		
