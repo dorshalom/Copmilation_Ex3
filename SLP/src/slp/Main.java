@@ -44,22 +44,20 @@ public class Main {
 			String translation = root.accept(translator, 0).lirCode;
 			
 			// print output to file
-			String outputsFileName = args[0].substring(0,args[0].length()-2)+"lir";
+			String resultFile = "output.lir";
 			try {
-				BufferedWriter buff = new BufferedWriter(new FileWriter(outputsFileName));
+				BufferedWriter buff = new BufferedWriter(new FileWriter(resultFile));
 				buff.write(translation);
 				buff.flush();
 				buff.close();
 			} catch (IOException e) {
-				System.err.println("Failed writing to file: "+outputsFileName);
+				System.out.println("Failed writing to file: "+resultFile);
 				e.printStackTrace();
 			}
 			System.out.println("LIR translation");
 			System.out.println("===============");
 			System.out.println(translation);
-			
-			
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
