@@ -1,7 +1,10 @@
 package symbolTable;
 
 import java.util.*;
+
 import semanticTypes.*;
+import slp.Class;
+import slp.Method;
 
 // class symbol for symbol table
  public class ClassSymbol extends Symbol {
@@ -62,6 +65,17 @@ import semanticTypes.*;
 			}
 		}
 		return ms;
+	}
+	
+	// returns the base class where static function <funcName> is defined
+	public String getBaseClassOfStaticMethod(String funcName){
+		if (methods.containsKey(funcName) && methods.get(funcName).isStatic)
+			return this.name;
+		if (superName != null){
+			ClassSymbol cs = (ClassSymbol) symbolTable.findEntryGlobal(superName);
+			return cs.getBaseClassOfStaticMethod(funcName);
+		} 
+		return null;
 	}
 
 	// try to add a new member method. Fails if the name of the method is already used in current class,
@@ -161,5 +175,24 @@ import semanticTypes.*;
 		}
 		
 		return n;
+	}
+	
+	
+	public List<MethodSymbol> getMethodsRec(){
+		List<MethodSymbol> list = new ArrayList<MethodSymbol>(methods.values());
+		if (superName != null){
+			ClassSymbol cs = (ClassSymbol) symbolTable.findEntryGlobal(superName);
+			list.addAll(cs.getMethodsRec());
+		}
+		return list;
+	}
+	
+	public List<FieldSymbol> getFieldsRec(){
+		List<FieldSymbol> list = new ArrayList<FieldSymbol>(fields.values());
+		if (superName != null){
+			ClassSymbol cs = (ClassSymbol) symbolTable.findEntryGlobal(superName);
+			list.addAll(cs.getFieldsRec());
+		}
+		return list;
 	}
 }

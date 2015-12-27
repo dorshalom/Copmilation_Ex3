@@ -1,12 +1,63 @@
-class C{
-	int j;
-	void walk(int j){
-		j = 0;
-		int k;
-		{
-			int j = 9;
-			k = j;
-		}
+class A{
+	string a_field;
+
+	static void staticPrintFields(string a, string b, string c){
+		Library.println(a);
+		Library.println(b);
+		Library.println(c);
+		Library.println("");
 	}
-	static void main(string[] args) {}
+
+	void virtualPrintFields(){
+		Library.println(a_field);
+		Library.println("");
+	}
+
+	void a_foo(){
+		a_field = "a";
+		virtualPrintFields();
+	}
+}
+
+class B extends A{
+	string b_field;
+
+	void virtualPrintFields(){
+		Library.println(a_field);
+		Library.println(b_field);
+		Library.println("");
+	}
+
+	void b_foo(){
+		a_field = "b";
+		b_field = "b";
+		virtualPrintFields();
+		a_foo();
+	}
+}
+
+class C extends B{
+	string c_field;
+
+	void virtualPrintFields(){
+		Library.println(a_field);
+		Library.println(b_field);
+		Library.println(c_field);
+		Library.println("");
+	}
+
+	void c_foo(){
+		this.a_field = "c";
+		this.b_field = "c";
+		this.c_field = "c";
+		virtualPrintFields();
+		b_foo();
+	}
+}
+
+class Main{
+	static void main(string[] args){
+		//C.staticPrintFields("1", "2", "3");
+		(new C()).c_foo();
+	}
 }

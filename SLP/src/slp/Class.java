@@ -1,5 +1,6 @@
 package slp;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Class extends ASTNode {

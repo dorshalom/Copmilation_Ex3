@@ -214,6 +214,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 			
 			int methodOffset = 0;
 			for (Method m: cl.methods){
+				m.belongsToClass = cl.name;
 				try{
 					List<ParamSymbol> params = new ArrayList<ParamSymbol>();
 					for (Formal f: m.formalList){
@@ -261,7 +262,7 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 			System.out.println(""+cl.line + ": "+se);
 			System.exit(1);
 		}
-		int methodOffset = 0;
+		/*int methodOffset = 0;
 		for (Method m: cl.methods){
 			m.belongsToClass = cl.name;
 			try{
@@ -275,8 +276,8 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 				System.exit(1);
 			}
 			methodOffset++;
-		}
-		// TODO: change offsets to support inheritance
+		}*/
+		/*// TODO: change offsets to support inheritance
 		int fieldOffset = 0;
 		for (Field f: cl.fields){
 			try{
@@ -286,6 +287,14 @@ public class SemanticChecker implements PropagatingVisitor<Object, Object> {
 				System.exit(1);
 			}
 			fieldOffset++;
+		}*/
+
+		ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(cl.name);
+		for (MethodSymbol m: cs.getMethodsRec()){
+			symTab.addEntry(m);
+		}
+		for (FieldSymbol f: cs.getFieldsRec()){
+			symTab.addEntry(f);
 		}
 		
 		for (Method m: cl.methods){

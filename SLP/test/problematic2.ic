@@ -1,8 +1,0 @@
-class C{
-	int j;
-
-	static void main(string[] args) {	
-		j = 0;
-		Library.printi(j);
-	}
-}

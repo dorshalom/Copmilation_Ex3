@@ -1,7 +1,0 @@
-class C{
-	static void main(string[] args){
-		string s1 = "foo";
-		string s2 = "bar";
-		Library.print(s1+s2);
-	}	
-}

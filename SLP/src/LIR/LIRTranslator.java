@@ -175,13 +175,9 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		
 		currentThisClass = cl.name; //update current class
 		
-		// TODO: change offsets to support inheritance
-		int fieldOffset = 0;
-		for (Field f: cl.fields){
-			try{
-				symTab.addEntry(new FieldSymbol(f.name, typTab.resolveType(f.type.getName()),fieldOffset));
-			} catch (SemanticError se){}
-			fieldOffset++;
+		ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(cl.name);
+		for (FieldSymbol f: cs.getFieldsRec()){
+			symTab.addEntry(f);
 		}
 		
 		for(Method m: cl.methods){
@@ -463,6 +459,8 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		
 		// other static methods
 		ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(staticCall.className);
+		String baseName = cs.getBaseClassOfStaticMethod(staticCall.funcName);
+		cs = (ClassSymbol) symTab.findEntryGlobal(baseName);
 		MethodSymbol ms = null;
 		try {
 			ms = cs.getMethodSymbol(staticCall.funcName);
