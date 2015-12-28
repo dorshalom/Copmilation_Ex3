@@ -95,13 +95,40 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 	public LIRUpType visit(Program program, Object o) {
 		/////// fill dispatch table: ///////
 		for(Class cl: program.classes){
+			List<String> overridenMethods = new ArrayList<String>();
 			dispatchTableMap.put(cl.name, new HashMap<Integer,ArrayList<String>>());
 			int j = 0; // j will be the methods offset
 			
 			// has super - clone methods list from super class, if the method doesn't exist in the current class.
 			if(cl.superName != null){ 	
-					
 				HashMap<Integer,ArrayList<String>> supersMethodsMap = dispatchTableMap.get(cl.superName);
+				for (int i=0;i<supersMethodsMap.keySet().size();i++){
+					String mName = supersMethodsMap.get(i).get(0);
+					String belongName = supersMethodsMap.get(i).get(1);
+					ArrayList<String> methodDetails = new ArrayList<String>(2);
+					if (!cl.hasMethodWithName(mName)){  // if the method doesn't exist in the current class
+						methodDetails.add(mName); methodDetails.add(belongName);
+					}
+					else{	// such a method exists (it's overridden)
+						methodDetails.add(mName); methodDetails.add(cl.name);
+						overridenMethods.add(mName);
+					}
+					dispatchTableMap.get(cl.name).put(j, methodDetails);
+					j++;
+				}	
+			}
+			
+			// insert new methods into dispatch table map (if not static)
+			for (Method m: cl.methods){
+				
+				if(!m.isStatic && !overridenMethods.contains(m.name)){
+					ArrayList<String> methodDetails = new ArrayList<String>(2);
+					methodDetails.add(m.name); methodDetails.add(cl.name);
+					dispatchTableMap.get(cl.name).put(j, methodDetails);
+					j++;			
+				}
+			}	
+				/*HashMap<Integer,ArrayList<String>> supersMethodsMap = dispatchTableMap.get(cl.superName);
 				for (int i=0;i<supersMethodsMap.keySet().size();i++){
 					String mName = supersMethodsMap.get(i).get(0);
 					String belongName = supersMethodsMap.get(i).get(1);
@@ -123,7 +150,7 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 					dispatchTableMap.get(cl.name).put(j, methodDetails);
 					j++;			
 				}
-			}
+			}*/
 		}
 		
 		/////// visit all classes in the program //////
