@@ -514,7 +514,7 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		
 		// external
 		if (virtCall.location != null){
-			className = ((SemanticType)virtCall.location.accept(new ExprRuntimeTypeResolver(symTab, typTab, currentThisClass, currentMethodName), null)).name;
+			className = ((SemanticType)virtCall.location.accept(new ExprTypeResolver(symTab, typTab, currentThisClass, currentMethodName), null)).name;
 			LIRUpType location = virtCall.location.accept(this, null);
 			str += location.lirCode;
 			if(location.astNodeType != LIRAstNodeType.REGISTER){
@@ -585,7 +585,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 				fs = cs.getFieldSymbolRec(varLoc.name);
 			}catch (SemanticError se){}			 
 			int fieldOffset = fs.getOffset();
-			fs.runtimeType = runtimeType;
 			
 			if(loc.astNodeType != LIRAstNodeType.REGISTER){
 				str += getMoveType(loc.astNodeType);
@@ -601,13 +600,9 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 			int scopeLevel = symTab.findScopeLevel(varLoc.name);
 			if (scopeLevel > 2){	// its' a local variable
 				localVarName = varLoc.name + scopeLevel;
-				Symbol s = symTab.findEntryGlobal(varLoc.name);
-				s.runtimeType = runtimeType;
 			}
 			else if (symTab.findEntryGlobal("__p_"+varLoc.name) != null){ // it's a function parameter => leave it's name as is
 				localVarName = varLoc.name;
-				Symbol s = symTab.findEntryGlobal("__p_"+varLoc.name);
-				s.runtimeType = runtimeType;
 			}
 			else if (scopeLevel == 2){	// it's a field of THIS
 				ClassSymbol cs = (ClassSymbol) symTab.findEntryGlobal(currentThisClass);
@@ -616,7 +611,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 					fs = cs.getFieldSymbolRec(varLoc.name);
 				}catch(SemanticError se){}
 				int fieldOffset = fs.getOffset();
-				fs.runtimeType = runtimeType;
 				
 				str += "Move this, R"+curReg+"\n";
 
@@ -759,10 +753,6 @@ public class LIRTranslator implements PropagatingVisitor<Object, LIRUpType> {
 		String reg = "R"+curReg;
 		
 		if (localVarStmt.init != null){
-			runtimeType = (SemanticType) localVarStmt.init.accept(new ExprTypeResolver(symTab, typTab, currentThisClass, currentMethodName), null);
-			Symbol s = symTab.findEntryLocal(localVarStmt.name);
-			s.runtimeType = runtimeType;
-
 			LIRUpType initVal = localVarStmt.init.accept(this, null);
 			str += initVal.lirCode;
 			if (initVal.astNodeType != LIRAstNodeType.REGISTER){

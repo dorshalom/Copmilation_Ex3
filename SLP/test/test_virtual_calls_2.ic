@@ -57,7 +57,6 @@ class C extends B{
 
 class Main{
 	static void main(string[] args){
-		//C.staticPrintFields("1", "2", "3");
 		(new C()).c_foo();
 	}
 }
